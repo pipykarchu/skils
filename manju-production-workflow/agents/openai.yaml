@@ -1,0 +1,4 @@
+interface:
+  display_name: "漫剧生产工作流"
+  short_description: "串联PRD、剧本、分镜、提示词和质检的漫剧生产总控"
+  default_prompt: "Use $manju-production-workflow to start an end-to-end AI 漫剧 project workflow from PRD to screenplay, storyboard, image prompts, and quality checks."

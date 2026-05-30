@@ -29,6 +29,7 @@ C:\Users\Administrator\.codex\skills\screenplay-director\SKILL.md
 | `prd-writer-agent` | 想把产品想法、功能需求、MVP、改进建议整理成 PRD 时使用。它会先做需求访谈和概念对齐，再输出标准 PRD。 | `$prd-writer-agent 帮我把一个 AI 漫剧生成工具整理成 MVP PRD` |
 | `screenplay-director` | 想把故事、小说片段或散乱文字整理成中文专业剧本时使用。它会先提炼剧情大纲，自动起标题，建立人物设定角色档案，保持男女主和反派出场描述一致，并创建 Markdown 和 Word 文件。 | `$screenplay-director 把这段小说整理成剧本，并保持男女主和反派设定一致` |
 | `script-to-storyboard` | 想把剧本、小说片段、Word、PDF、Markdown 或网页内容拆成分镜头脚本，并输出可用于 AI 生图的镜头提示词时使用。 | `$script-to-storyboard 把这个剧本文件转成分镜表，输出 Markdown 和 Excel` |
+| `manju-production-workflow` | 想从 0 到 1 做完整漫剧生产流水线时使用。它会协调 PRD、SOP、角色档案、剧本、分镜、AI 生图提示词和质检。 | `$manju-production-workflow 启动漫剧项目《重生后我不再忍了》，题材都市复仇，30集，每集60秒` |
 
 ## 简单判断
 
@@ -36,6 +37,7 @@ C:\Users\Administrator\.codex\skills\screenplay-director\SKILL.md
 - 要把故事、小说或文字整理成剧本，并保存成 Markdown/Word，用 `screenplay-director`。
 - 要稳定女主、男主、反派的人物设定、绘图固定提示词和禁止变化特征，也用 `screenplay-director`。
 - 要把已有剧本拆成分镜头、景别、画面描述和 AI 生图提示词，用 `script-to-storyboard`。
+- 要完整跑 PRD、SOP、剧本、分镜、提示词和质检，用 `manju-production-workflow`。
 
 ## 激活方式
 
@@ -53,9 +55,14 @@ $script-to-storyboard 把这个剧本转成漫剧分镜表
 $prd-writer-agent 帮我写一个 MVP PRD
 ```
 
+```text
+$manju-production-workflow 启动漫剧项目《重生后我不再忍了》
+```
+
 ## 维护规则
 
 - 新增 skill 后，同步更新这个 `README.md`。
+- 新增 skill 后，同步更新 `INDEX.md`。
 - 更新 skill 的用途、触发方式、外部依赖或风险说明后，同步更新这个 `README.md`。
 - 删除或停用 skill 后，从这个 `README.md` 移除或标注“已停用”。
 - 不要把 API Key、密码、私密 token 写进仓库。
@@ -64,5 +71,6 @@ $prd-writer-agent 帮我写一个 MVP PRD
 
 - `screenplay-director` 支持兔子 API 多模型流程，但只有用户明确要求调用 API 时才应该调用。
 - `script-to-storyboard` 支持通过兔子 API 先用 DeepSeek 写分镜初稿，再用 Claude 改对白、节奏和情绪。
+- `manju-production-workflow` 默认只协调本地文件和子 skill；只有用户明确要求外部模型或平台时才调用 API。
 - 调用外部 API 会消耗余额，也会把输入内容发送到第三方服务。
 - API Key 不要写进仓库；默认从环境变量 `TUZI_API_KEY` 读取。

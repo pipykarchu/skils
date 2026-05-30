@@ -207,6 +207,42 @@ Final response must include:
 - Word 文件路径
 - 简短说明是否已成功创建
 
+## Manju Workflow Mode
+
+When invoked by `manju-production-workflow`, treat the screenplay output as the middle layer between PRD and storyboard production.
+
+If a workflow project root is provided, use this folder layout:
+
+```text
+<项目名>/03_角色设定/角色档案.md
+<项目名>/03_角色设定/角色固定提示词.md
+<项目名>/04_分集大纲/<项目名>_分集大纲.md
+<项目名>/05_剧本/第XX集_<标题>.md
+<项目名>/05_剧本/第XX集_<标题>.docx
+```
+
+If the user provides a PRD file, read it as the production boundary:
+
+- 题材、观众、爽点、集数、每集时长 must follow the PRD.
+- 画风 and output format must be reflected in the role prompt and shot-ready descriptions.
+- 禁止内容 and platform risks must be respected in dialogue and scenes.
+- 本版不做 must not be silently added back into the story.
+
+Create two role-oriented handoff files for 漫剧 projects:
+
+1. `角色档案.md`: full character profiles for writing and consistency.
+2. `角色固定提示词.md`: compact drawing prompts for repeated use in storyboard and image generation.
+
+For each episode screenplay, add a `分镜交接信息` section before file output. It must include:
+
+- 推荐片段名称列表, matching the segment titles in the screenplay.
+- 主要出场人物 and their fixed visual descriptions.
+- 场景清单, with visible time and location.
+- 本集画风约束, aspect ratio, and image prompt notes.
+- Suggested next command using `$script-to-storyboard` with the screenplay path and segment name.
+
+Do not generate the storyboard table inside this skill unless the user explicitly asks to combine stages. Prefer handing off to `script-to-storyboard`.
+
 ## Tuzi API Multi-Model Workflow
 
 Use the Tuzi API workflow only when the user explicitly asks to call models, use Tuzi API, or run the DeepSeek / Claude-GPT / Gemini pipeline.

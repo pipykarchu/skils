@@ -152,6 +152,33 @@ Use these tools when relevant:
 - MoSCoW for MVP priority.
 - Kano for feature value classification.
 
+## Manju Workflow Handoff
+
+When invoked by `manju-production-workflow`, treat the PRD as the upstream source for the whole comic-drama production pipeline.
+
+Use the workflow project root if it is provided. In that case, save PRD outputs under:
+
+```text
+<项目名>/00_PRD/<项目名>_PRD.md
+<项目名>/00_PRD/<项目名>_PRD.html
+```
+
+For 漫剧 projects, add a `下游制作交接` section before final output. It must contain:
+
+- 角色档案输入: what `screenplay-director` should use to build stable character files.
+- 分集大纲输入: target episode count, episode duration, core hooks, and rhythm rules.
+- 分镜约束: visual style, aspect ratio, forbidden visuals, and shot-level production requirements.
+- 生图提示词约束: role consistency rules, fixed visual keywords, negative prompt notes, and LoRA needs.
+- 质检重点: front 3-second hook, cliffhanger, character consistency, platform risk, and production feasibility.
+
+At the end of the final PRD response, clearly state the next recommended skill:
+
+```text
+下一步建议使用 $screenplay-director，根据 PRD 生成角色档案、分集大纲和第 1 集剧本。
+```
+
+Do not generate the screenplay inside this PRD skill. Only prepare the handoff material.
+
 ## References
 
 - Read `references/prd-knowledge-base.md` when diagnosing requirements, asking interview questions, checking risk, or reviewing PRD quality.
