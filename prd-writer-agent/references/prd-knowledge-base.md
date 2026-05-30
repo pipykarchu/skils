@@ -129,8 +129,17 @@ The section should separate:
 - 产品运行工作流: how the actual product processes user input and produces output.
 - 模型与工具路由: which model/tool handles each task, fallback choices, and volatile provider assumptions.
 - 配置与安全: API keys, base URLs, privacy, sensitive data, and third-party risk.
+- AI 开发成本统计: for AI-assisted development, track development-stage tokens and spend by platform/tool/model, including Codex and Claude when used.
 
-When users update tool choice, model provider, API routing, role division, runtime steps, milestones, or privacy/security rules, update `工作流设计` and the revision log.
+For AI development cost tracking:
+
+- Track by platform/tool/model and by stage when possible.
+- Include input tokens, output tokens, cache/thinking/other platform-specific tokens, total tokens, amount, currency, pricing source, pricing date, and data source.
+- Distinguish actual billing data from estimates.
+- Mark missing values as `待统计` or `待确认`.
+- Do not invent usage or billing numbers. Ask for explicit permission before accessing external billing dashboards, invoices, exports, or accounts.
+
+When users update tool choice, model provider, API routing, role division, runtime steps, milestones, privacy/security rules, token usage, or development cost, update `工作流设计` and the revision log.
 
 ## Requirement Interview Prompts
 
