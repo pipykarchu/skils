@@ -12,20 +12,22 @@ Use this reference when generating `<项目名>_PRD.html` after the PRD Markdown
 
 ## 皮玺玉风格
 
-Interpret 皮玺玉风格 as a clean product-manager review document style:
+Interpret 皮玺玉风格 as the same visual language as the personal IP site `皮玺玉 × AI 貔貅`:
 
-- 白底、克制、清爽，有产品经理笔记感。
-- 大标题醒目，正文安静，信息密度适中，适合评审和交付。
-- 用青绿、蓝、浅紫、玫红作少量高亮，不做单一色系页面。
-- 使用细线、浅色底、左侧强调线、状态标签、表格和编号，让结构清楚。
-- 不使用装饰性渐变球、浮夸营销 hero、暗色大背景或卡片套卡片。
-- 视觉重点放在项目名、文档状态、MVP 范围、核心功能、风险和待确认项。
+- Linear-like minimalism: warm off-white background, quiet document surfaces, thin borders, 8px radius, precise spacing, and high readability.
+- Brand cue: use a restrained purple-to-pink gradient (`#A78BFA -> #F472B6`) for the title accent, primary action, or one key line only.
+- Secondary cue: use a very light teal/emerald wash for status, success, or flow highlights. Keep it subtle, not a full-page teal theme.
+- Personal IP polish: first viewport should feel like a refined portfolio/document hybrid, not a plain export. Use a compact document hero with an eyebrow, H1, subtitle, metadata tiles, and status chips.
+- Document-first: PRD content remains the product. Do not turn the page into a marketing landing page; avoid oversized hero sections, stock images, decorative gradient orbs, bokeh blobs, and card-in-card layouts.
+- Mascot/assets: do not require the AI 貔貅 image or any external asset. If a local mascot asset is explicitly available, it may be used as a small brand accent, never as the main PRD content.
+- Keep the page usable in shallow and dark themes when practical, using CSS variables. If no theme toggle is added, default to the warm light theme.
+- Visual priority: project name, document status, version, owner, MVP scope, workflow, cost/output/ROI tables, risks, and open questions.
 
 ## Layout
 
 Desktop:
 
-- Top document header: project name, PRD status, version, update date, owner.
+- Top document header: eyebrow, project name, concise positioning, PRD status, version, update date, owner, and 2-4 metric tiles.
 - Left sticky table of contents if the document is long.
 - Main content width around 960-1120px.
 - Sections are separated by whitespace, subtle borders, or left accent bars.
@@ -43,28 +45,69 @@ Suggested CSS variables:
 
 ```css
 :root {
-  --bg: #fbfcfd;
+  --bg: #fafaf7;
   --paper: #ffffff;
-  --text: #24272f;
-  --muted: #6d7280;
-  --line: #e7eaf0;
-  --green: #17b26a;
-  --cyan: #06b6d4;
-  --blue: #2563eb;
-  --purple: #8b5cf6;
-  --pink: #ec4899;
-  --warning: #f59e0b;
+  --paper-soft: #f5f3ee;
+  --text: #1c1c1e;
+  --text-secondary: #6b6b73;
+  --text-tertiary: #9a9aa3;
+  --line: #e8e6e0;
+  --purple: #A78BFA;
+  --pink: #F472B6;
+  --accent: #c084fc;
+  --success: #34d399;
+  --warning: #fbbf24;
   --danger: #ef4444;
+  --teal: #14b8a6;
+  --gradient-brand: linear-gradient(135deg, #A78BFA 0%, #F472B6 100%);
+  --shadow-brand: 0 8px 24px rgba(167, 139, 250, 0.22);
+}
+
+[data-theme="dark"] {
+  --bg: #08080a;
+  --paper: #131316;
+  --paper-soft: #1c1c20;
+  --text: #f5f5f7;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #71717a;
+  --line: #2a2a2e;
 }
 ```
 
 Use system fonts:
 
 ```css
-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 ```
 
 Do not scale font size with viewport width. Do not use negative letter spacing.
+
+Recommended component CSS patterns:
+
+```css
+.doc-shell {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--paper) 80%, transparent) 0%, transparent 62%),
+    linear-gradient(135deg, rgba(167,139,250,0.10), rgba(167,139,250,0.04) 34%, transparent 72%),
+    linear-gradient(225deg, rgba(20,184,166,0.10), rgba(20,184,166,0.04) 32%, transparent 70%);
+}
+
+.brand-text {
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.metric-tile,
+.doc-card,
+.toc {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+}
+```
 
 ## Required Page Sections
 
@@ -83,12 +126,15 @@ The web page should render these PRD areas when present:
 
 ## Component Guidance
 
-- Use status chips for `草稿`, `概念待确认`, `待评审`, `已确认`, `待确认`, `P0/P1/P2`.
-- Use callout bands for assumptions, risks, and open questions.
+- Use status chips for `草稿`, `概念待确认`, `待评审`, `已确认`, `待确认`, `P0/P1/P2`. Chips should be 999px pills with subtle tinted backgrounds.
+- Use metric tiles in the document header for 2-4 key facts such as version, status, MVP scope, total milestones, or ROI status.
+- Use callout bands for assumptions, risks, and open questions. Use purple for strategy, teal/emerald for success or workflow, amber for risk.
 - Use tables for lists and fields. Avoid paragraph-only PRDs.
 - Use definition lists or compact grids for metadata.
 - If the PRD includes Mermaid diagrams, keep the source visible in a styled `pre` block unless a renderer is already available locally.
 - Use anchor links for sections.
+- Use subtle hover movement only for obvious clickable controls; static PRD content should not animate.
+- Honor reduced-motion preferences if any animation is included.
 
 ## Quality Checks
 
