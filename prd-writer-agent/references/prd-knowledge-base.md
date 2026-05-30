@@ -129,7 +129,7 @@ The section should separate:
 - 产品运行工作流: how the actual product processes user input and produces output.
 - 模型与工具路由: which model/tool handles each task, fallback choices, and volatile provider assumptions.
 - 配置与安全: API keys, base URLs, privacy, sensitive data, and third-party risk.
-- AI 开发成本统计: for AI-assisted development, track development-stage tokens and spend by platform/tool/model, including Codex and Claude when used.
+- AI 开发成本统计与 ROI: for AI-assisted development, track development-stage tokens and spend by platform/tool/model, including Codex and Claude when used, then define benefit metrics for later ROI calculation.
 
 For AI development cost tracking:
 
@@ -138,8 +138,11 @@ For AI development cost tracking:
 - Distinguish actual billing data from estimates.
 - Mark missing values as `待统计` or `待确认`.
 - Do not invent usage or billing numbers. Ask for explicit permission before accessing external billing dashboards, invoices, exports, or accounts.
+- Include ROI-ready benefit metrics when relevant: saved labor hours, avoided outsourcing cost, faster delivery value, generated revenue, operating cost reduction, reduced rework, or efficiency gains.
+- Use a clear ROI formula, such as `AI 开发 ROI = (AI 产生总收益 - AI 开发总成本) / AI 开发总成本 * 100%`.
+- For estimated benefits, record baseline, post-AI result, measurement window, data source, confidence level, and assumptions.
 
-When users update tool choice, model provider, API routing, role division, runtime steps, milestones, privacy/security rules, token usage, or development cost, update `工作流设计` and the revision log.
+When users update tool choice, model provider, API routing, role division, runtime steps, milestones, privacy/security rules, token usage, development cost, benefit assumptions, or ROI calculation, update `工作流设计` and the revision log.
 
 ## Requirement Interview Prompts
 
