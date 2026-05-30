@@ -1,6 +1,6 @@
 ---
 name: prd-writer-agent
-description: Use when a user wants to discuss a product idea, feature request, improvement suggestion, MVP scope, comic-drama/manju project, short-form serialized content project, AI-assisted development workflow, token/cost/output/ROI estimation and tracking for AI development, or asks to write, draft, review, iterate, visualize, or publish a PRD/product requirements document. Guides Codex through requirement interviewing, three-perspective diagnosis, concept alignment, incremental project-named PRD Markdown generation, missing-information follow-up, final standard PRD output, and a matching project-named PRD web page for product, design, content production, development, testing, or vibe coding work.
+description: Use when a user wants to discuss a product idea, feature request, improvement suggestion, MVP scope, comic-drama/manju project, short-form serialized content project, AI-assisted development workflow, workflow generation using the user's default Codex + Claude + Tuzi API environment, token/cost/output/ROI estimation and tracking for AI development, or asks to write, draft, review, iterate, visualize, or publish a PRD/product requirements document. Guides Codex through requirement interviewing, three-perspective diagnosis, concept alignment, incremental project-named PRD Markdown generation, missing-information follow-up, final standard PRD output, and a matching project-named PRD web page for product, design, content production, development, testing, or vibe coding work.
 ---
 
 # PRD Writer Agent
@@ -35,6 +35,28 @@ For AI-assisted development projects, keep a running `AI 开发成本、产出�
 - After execution: compare estimated vs actual cost/output, calculate ROI only from traceable cost and benefit data.
 - Never invent prices, token usage, account bills, or ROI. Use `待估算`, `待统计`, or `待确认` when data is missing.
 
+## Default AI Working Environment
+
+When the user asks to `设计生成工作流`, `设计工作流`, `生成工作流`, `开发工作流`, `AI 开发工作流`, or similar, and does not provide a different environment, automatically use this default setup:
+
+| Tool/platform | Default role |
+| --- | --- |
+| Codex | Primary implementer: code changes, bug fixes, tests, local scripts, page generation, API wiring, file updates, and repository operations. |
+| Claude | Reviewer and thinking partner: architecture review, PRD review, prompt review, risk analysis, complex logic review, and code review. |
+| Tuzi API | Runtime model gateway for the product: route text generation, summarization, structure extraction, model fallback, and multi-model experiments when relevant. |
+| Tuzi pricing page | Default price/model verification entry: `https://api.tu-zi.com/pricing`. Treat prices, available models, groups, tool support, and routing rules as volatile. |
+
+Apply this default environment in Phase 2 concept output, Phase 3 workflow input collection, and Phase 4 `工作流设计`.
+
+Default workflow design must:
+
+- Separate `开发工作流` from `产品运行工作流`.
+- Use Codex for implementation and local verification by default.
+- Use Claude for review, architecture checks, PRD/prompt review, and quality gates by default.
+- Use Tuzi API as the product runtime model gateway by default, while marking exact model names, pricing, tool support, and fallback choices as `待确认` unless freshly verified.
+- Include AI development cost/output/ROI estimates for Codex, Claude, and Tuzi API when the project is AI-assisted development.
+- Allow explicit user instructions to override any default tool, model, platform, pricing source, or workflow step.
+
 ## Workflow
 
 ### Phase 0: Intake
@@ -47,6 +69,7 @@ Clarify what the user has provided:
 - Project name. If missing, infer a short name from the idea and ask the user to confirm.
 - Project type: software/product feature, internal tool, content project, 漫剧项目, or another domain.
 - Whether this is an AI-assisted development project that needs cost, output, and ROI estimation.
+- Whether the user wants to use the default Codex + Claude + Tuzi API environment. If the user says `设计生成工作流` without extra setup details, assume yes.
 
 If the user only says "帮我写 PRD", ask for the raw idea or current problem first.
 
@@ -117,6 +140,7 @@ For AI-assisted development projects, include a short `投入产出粗估` in Ph
 - 预计使用的 AI 工具/平台, such as Codex, Claude, Tuzi API, OpenAI, Gemini, or local models.
 - Expected outputs, such as PRD, prototype, code modules, pages, tests, prompts, reusable scripts, or workflow assets.
 - Cost/benefit assumptions that are already known, with missing values marked `待估算` or `待确认`.
+- If the user has not specified tools, default to Codex + Claude + Tuzi API and state that this is the default working environment assumption.
 
 Ask the user to confirm or revise these items. If the user revises direction, stay in Phase 2.
 
@@ -142,6 +166,7 @@ For AI-assisted development estimates, collect or infer:
 - Expected outputs per stage and their acceptance standards.
 - Benefit assumptions for ROI: saved labor hours, avoided outsourcing cost, faster delivery value, revenue impact, efficiency gain, or reduced rework.
 - Confidence level for each estimate: low, medium, or high.
+- Default route when unspecified: Codex handles implementation, Claude handles review, Tuzi API handles runtime model calls, and Tuzi pricing page is the price/model verification source.
 
 Use `references/prd-knowledge-base.md` for interview prompts and checklist details.
 

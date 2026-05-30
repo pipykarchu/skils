@@ -184,10 +184,13 @@ Use this template for Phase 4. Delete irrelevant sections only when the project 
 
 [说明开发协作如何运转。不要和产品运行链路混写。]
 
+默认工作环境：如果用户只说“设计生成工作流”且没有另行指定工具，默认使用 Codex + Claude + Tuzi API。Codex 负责实现和本地验证，Claude 负责架构/PRD/提示词/代码评审，Tuzi API 作为产品运行时模型网关。Tuzi 价格和模型能力以 `https://api.tu-zi.com/pricing` 为默认核验入口，未核验前标记为 `待确认`。
+
 | 角色/工具 | 主要用途 | 输入 | 输出 | 注意事项 |
 | --- | --- | --- | --- | --- |
 | Codex | [实现、调试、测试、生成页面等] | [PRD/任务] | [代码/页面/测试结果] | [限制] |
 | Claude | [架构评审、PRD 复核、提示词优化、代码 review 等] | [PRD/代码/提示词] | [评审意见/优化建议] | [限制] |
+| Tuzi API | [产品运行时模型网关、多模型路由、生成/总结/结构化等] | [业务输入/转写稿/结构化请求] | [AI 生成结果/结构化数据] | 价格、模型、tools 支持和分组能力均需核验 |
 
 ### 10.2 AI 开发成本、产出预估与 ROI
 
@@ -197,6 +200,7 @@ Use this template for Phase 4. Delete irrelevant sections only when the project 
 | --- | --- | --- |
 | 统计范围 | 需求、设计、编码、调试、评审、测试、上线准备等开发阶段 AI 使用 | 待确认 |
 | 平台范围 | Codex、Claude、Tuzi/OpenAI/Gemini 等实际使用的平台 | 待确认 |
+| 默认环境 | Codex 实现 + Claude 评审 + Tuzi API 运行时模型网关 | 可被用户覆盖 |
 | 估算层级 | 粗估 / 计划估算 / 执行估算 / 实际回填 | 待确认 |
 | Token 指标 | 输入 tokens、输出 tokens、缓存/思考/其他平台特有 tokens、总 tokens | 待确认 |
 | 金额指标 | 单平台金额、总金额、币种、汇率口径、是否含税/订阅费 | 待确认 |

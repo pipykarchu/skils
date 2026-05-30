@@ -1,4 +1,4 @@
 interface:
   display_name: "PRD Writer Agent"
-  short_description: "支持PRD访谈、漫剧需求、AI开发成本产出估算与ROI统计"
-  default_prompt: "Use $prd-writer-agent to clarify my product or comic-drama project idea, maintain a project-named PRD Markdown file, include AI development cost/output/ROI estimation and actual tracking when relevant, and generate a matching Pixiyu-style PRD web page after the PRD is complete."
+  short_description: "支持PRD访谈、漫剧需求、默认Codex/Claude/Tuzi工作流和ROI"
+  default_prompt: "Use $prd-writer-agent to clarify my product or comic-drama project idea, maintain a project-named PRD Markdown file, design workflows with the default Codex + Claude + Tuzi API environment when not otherwise specified, include AI development cost/output/ROI estimation and actual tracking when relevant, and generate a matching Pixiyu-style PRD web page after the PRD is complete."

@@ -123,6 +123,17 @@ Generate `工作流设计` only when producing the final standard PRD, or when i
 
 Include this section when the project involves AI models, third-party API providers, tool routing, multi-agent collaboration, runtime pipelines, or implementation milestones.
 
+### Default AI Working Environment
+
+When the user says `设计生成工作流`, `设计工作流`, `生成工作流`, `开发工作流`, or similar without specifying a different environment, assume the user's default setup:
+
+- Codex: implementation, debugging, local verification, page generation, API wiring, repository edits.
+- Claude: architecture review, PRD review, prompt optimization, complex logic review, code review.
+- Tuzi API: product runtime model gateway for model routing, generation, summarization, structure extraction, and fallback experiments.
+- Tuzi pricing page: `https://api.tu-zi.com/pricing` as the default model/price verification source.
+
+This default can be overridden by explicit user instructions. Treat Tuzi pricing, model availability, provider groups, tool/function-calling support, and third-party limits as volatile and mark them `待确认` unless freshly verified.
+
 The section should separate:
 
 - 开发工作流: who/what builds, reviews, tests, and ships the project.
