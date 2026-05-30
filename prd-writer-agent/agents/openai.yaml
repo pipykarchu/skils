@@ -1,0 +1,4 @@
+interface:
+  display_name: "PRD Writer Agent"
+  short_description: "通过需求访谈、概念对齐、风险检查和模板产出标准PRD文档"
+  default_prompt: "Use $prd-writer-agent to clarify my product idea and draft a standard PRD."
