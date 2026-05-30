@@ -7,7 +7,7 @@ description: 将中文剧本、小说片段或网页内容转换为分镜头脚�
 
 ## 工作流
 
-1. 明确输入文件或 URL，以及输出格式：默认同时输出 Markdown 和 Excel。
+1. 明确输入文件或 URL、片段名称、输出格式：默认同时输出 Markdown 和 Excel。
 2. 优先运行 `scripts/generate_storyboard.py` 生成结构化分镜。真实调用前提醒用户：Tuzi API 会消耗额度，需要 `TUZI_API_KEY`。
 3. 使用两阶段模型流程：
    - 初稿：DeepSeek V4 Pro，负责拆分剧情、补齐镜头字段、生成客观画面描述。
@@ -23,12 +23,27 @@ description: 将中文剧本、小说片段或网页内容转换为分镜头脚�
 python C:\Users\Administrator\.codex\skills\script-to-storyboard\scripts\generate_storyboard.py input.md --out out --dry-run
 ```
 
+按片段名称生成新文件：
+
+```bash
+python C:\Users\Administrator\.codex\skills\script-to-storyboard\scripts\generate_storyboard.py input.md --segment "片段 01：妈妈病了" --out out
+```
+
+成功标志：输出目录里出现 `input_片段 01_妈妈病了_分镜脚本.md` 和 `input_片段 01_妈妈病了_分镜脚本.xlsx`。
+
 真实调用 Tuzi：
 
 ```bash
 $env:TUZI_API_KEY="sk-..."
 python C:\Users\Administrator\.codex\skills\script-to-storyboard\scripts\generate_storyboard.py input.md --out out
 ```
+
+如果用户说“用这个技能，根据剧本和片段名称建立新文件”，优先要求或定位这两项：
+
+- 剧本文件路径或网页 URL。
+- 片段名称，例如 `片段 01：妈妈病了`、`妈妈病了`、`夜路出发`。
+
+然后运行 `--segment`，不要把全文都送进模型。
 
 如果 Tuzi 后台模型名变化，先列模型：
 

@@ -72,6 +72,54 @@ def read_text(source: str) -> str:
     raise ValueError(f"暂不支持的输入格式：{suffix or source}")
 
 
+def normalize_label(value: str) -> str:
+    return re.sub(r"[\s#*_`：:，,。.\-—|【】\[\]()（）]+", "", value).lower()
+
+
+def extract_named_segment(text: str, segment: str) -> str:
+    target = normalize_label(segment)
+    if not target:
+        return text
+
+    lines = text.splitlines()
+    headings: list[tuple[int, int, str]] = []
+    for index, line in enumerate(lines):
+        match = re.match(r"^(#{1,6})\s+(.+?)\s*$", line)
+        if match:
+            headings.append((index, len(match.group(1)), match.group(2)))
+
+    for pos, (start, level, title) in enumerate(headings):
+        label = normalize_label(title)
+        if target in label or label in target:
+            end = len(lines)
+            for next_start, next_level, _ in headings[pos + 1 :]:
+                if next_level <= level:
+                    end = next_start
+                    break
+            selected = "\n".join(lines[start:end]).strip()
+            if selected:
+                return selected
+
+    for index, line in enumerate(lines):
+        if target in normalize_label(line):
+            end = len(lines)
+            for next_index in range(index + 1, len(lines)):
+                if re.match(r"^#{1,6}\s+", lines[next_index]):
+                    end = next_index
+                    break
+            selected = "\n".join(lines[index:end]).strip()
+            if selected:
+                return selected
+
+    raise ValueError(f"没有在剧本中找到片段：{segment}")
+
+
+def safe_filename_part(value: str) -> str:
+    cleaned = re.sub(r'[<>:"/\\|?*\x00-\x1f]+', "_", value).strip(" ._")
+    cleaned = re.sub(r"\s+", "_", cleaned)
+    return cleaned[:60] or "片段"
+
+
 def html_to_text(markup: str) -> str:
     parser = TextExtractor()
     parser.feed(markup)
@@ -355,6 +403,7 @@ def generate_rows(args: argparse.Namespace, text: str) -> list[dict[str, Any]]:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="把剧本生成中文分镜头脚本。")
     parser.add_argument("input", nargs="?", help="输入文件路径或网页 URL，支持 md/txt/docx/pdf/html/url")
+    parser.add_argument("--segment", help="只生成指定片段，例如：片段 01：妈妈病了、妈妈病了")
     parser.add_argument("--out", default="storyboard_out", help="输出目录")
     parser.add_argument("--formats", default="md,xlsx", help="输出格式：md,xlsx")
     parser.add_argument("--dry-run", action="store_true", help="不访问 API，生成示例结构用于验证")
@@ -378,6 +427,8 @@ def main() -> int:
         raise RuntimeError("请提供输入文件或 URL。")
 
     text = read_text(args.input).strip()
+    if args.segment:
+        text = extract_named_segment(text, args.segment)
     if not text:
         raise RuntimeError("输入内容为空，无法生成分镜。")
     rows = generate_rows(args, text)
@@ -385,6 +436,8 @@ def main() -> int:
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
     stem = Path(args.input).stem if not re.match(r"^https?://", args.input, re.I) else "webpage"
+    if args.segment:
+        stem = f"{stem}_{safe_filename_part(args.segment)}"
     selected = {item.strip().lower() for item in args.formats.split(",") if item.strip()}
     if "md" in selected:
         write_markdown(rows, out_dir / f"{stem}_分镜脚本.md")
