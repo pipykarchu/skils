@@ -115,6 +115,22 @@ Use this structure as a checklist, not as a rigid rule:
 7. 需求说明: requirement list, detailed rules, fields, interactions, acceptance criteria, edge cases.
 8. 非功能需求: performance, reliability, security, compliance, operations, analytics, data.
 9. 项目规划: roadmap, milestones, owner, dependencies, risks, launch validation.
+10. 工作流设计: in the final standard PRD only, describe development collaboration and product runtime workflow without mixing the two.
+
+## Workflow Design Section
+
+Generate `工作流设计` only when producing the final standard PRD, or when iterating an existing PRD that already has this section. During diagnosis and concept alignment, record workflow facts as notes or `待确认`.
+
+Include this section when the project involves AI models, third-party API providers, tool routing, multi-agent collaboration, runtime pipelines, or implementation milestones.
+
+The section should separate:
+
+- 开发工作流: who/what builds, reviews, tests, and ships the project.
+- 产品运行工作流: how the actual product processes user input and produces output.
+- 模型与工具路由: which model/tool handles each task, fallback choices, and volatile provider assumptions.
+- 配置与安全: API keys, base URLs, privacy, sensitive data, and third-party risk.
+
+When users update tool choice, model provider, API routing, role division, runtime steps, milestones, or privacy/security rules, update `工作流设计` and the revision log.
 
 ## Requirement Interview Prompts
 

@@ -17,6 +17,8 @@ For code, prototype, or visualization requests, first finish the MVP PRD flow, t
 
 Create and maintain a project-named PRD Markdown file during the conversation. After the PRD is complete, create a matching project-named PRD web page in 皮玺玉风格.
 
+Do not force a complete `工作流设计` section during diagnosis, concept alignment, or MVP information gathering. Capture workflow-related facts as notes or `待确认` items first, then automatically generate the full `工作流设计` section near the end of the Phase 4 standard PRD.
+
 ## Workflow
 
 ### Phase 0: Intake
@@ -106,6 +108,7 @@ After concept confirmation, collect missing details for implementation-grade PRD
 - 数据字段、埋点、指标、数据迁移、第三方依赖。
 - 性能、安全、稳定性、合规、运营配置、验收标准。
 - 开发排期、依赖、风险和上线验证。
+- If the user describes development tools, model providers, team roles, API routing, runtime chains, or collaboration rules, record them as workflow inputs. Do not expand them into a full `工作流设计` section until Phase 4.
 
 Use `references/prd-knowledge-base.md` for interview prompts and checklist details.
 
@@ -123,6 +126,15 @@ The PRD must:
 - Include acceptance criteria and edge cases for each core function.
 - Mark unclear items as `待确认` instead of hiding gaps.
 - Include "本版不做" so MVP boundaries are explicit.
+- Automatically add a `工作流设计` section near the end of the completed PRD when the project involves development collaboration, model/tool selection, API providers, production runtime chains, or implementation milestones. Place it after `项目计划` and before `风险与待确认` or `附录`.
+
+The `工作流设计` section must:
+
+- Separate `开发工作流` from `产品运行工作流`.
+- Describe role division, such as Codex for implementation, Claude for review, and model gateways such as Tuzi API for runtime calls when relevant.
+- Describe model/tool routing, fallback rules, environment variables, privacy/security notes, and milestone dependencies when relevant.
+- Treat model names, prices, provider capabilities, and third-party limits as volatile; mark them `待确认` unless freshly verified.
+- Avoid mixing product runtime rules with developer collaboration rules.
 
 Update `<项目名>_PRD.md` as the canonical PRD file. Then generate `<项目名>_PRD.html` from the completed Markdown using `references/prd-web-output-style.md`.
 
@@ -136,6 +148,7 @@ When the user provides changes after a PRD exists:
 - Add or update the revision log.
 - Preserve prior confirmed decisions unless the user explicitly changes them.
 - If a change conflicts with the concept version, return to Phase 2 for realignment.
+- If the change touches development tools, model/provider choice, model routing, team roles, API base URLs, runtime chains, milestones, environment variables, privacy, security, or delivery dependencies, update the PRD's `工作流设计` section as well.
 - Keep the Markdown and HTML synchronized after each accepted iteration.
 
 ## Quality Bar
