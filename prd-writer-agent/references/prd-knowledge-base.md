@@ -138,12 +138,18 @@ For AI development cost tracking:
 - Include input tokens, output tokens, cache/thinking/other platform-specific tokens, total tokens, amount, currency, pricing source, pricing date, and data source.
 - Estimate expected outputs: PRDs, technical designs, features, pages, APIs, tests, scripts, prompts, reusable components, and business or efficiency outcomes.
 - Label the estimate level: rough estimate, planning estimate, execution estimate, or actual.
+- Use transparent formulas:
+  - `预估金额 = 预估输入 tokens * 输入单价 + 预估输出 tokens * 输出单价 + 其他计费项`.
+  - `节省人力价值 = 节省小时数 * 人力时薪`.
+  - `提前上线价值 = 提前天数 * 日均业务价值`.
+  - `效率收益 = 单次节省时间 * 周期任务量 * 人力时薪`.
 - Distinguish actual billing data from estimates.
-- Mark missing values as `待统计` or `待确认`.
+- Mark missing values as `待估算`, `待统计`, or `待确认`.
 - Do not invent usage or billing numbers. Ask for explicit permission before accessing external billing dashboards, invoices, exports, or accounts.
 - Include ROI-ready benefit metrics when relevant: saved labor hours, avoided outsourcing cost, faster delivery value, generated revenue, operating cost reduction, reduced rework, or efficiency gains.
 - Use a clear ROI formula, such as `AI 开发 ROI = (AI 产生总收益 - AI 开发总成本) / AI 开发总成本 * 100%`.
 - For estimated benefits, record baseline, post-AI result, measurement window, data source, confidence level, and assumptions.
+- For precise cost estimates, verify current provider pricing or mark pricing as `待确认`; model prices and third-party gateway rules are volatile.
 
 When users update tool choice, model provider, API routing, role division, runtime steps, milestones, privacy/security rules, token usage, development cost, output estimates, benefit assumptions, or ROI calculation, update `工作流设计` and the revision log.
 

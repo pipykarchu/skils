@@ -19,6 +19,22 @@ Create and maintain a project-named PRD Markdown file during the conversation. A
 
 Do not force a complete `工作流设计` section during diagnosis, concept alignment, or MVP information gathering. Capture workflow-related facts as notes or `待确认` items first, then automatically generate the full `工作流设计` section near the end of the Phase 4 standard PRD.
 
+## Output Contract
+
+Maintain these outputs as the conversation evolves:
+
+- `./<项目名>/<项目名>_PRD.md`: canonical PRD, created after the project name is known and updated after each confirmed requirement batch.
+- `./<项目名>/<项目名>_PRD.html`: generated only after the standard PRD is complete, then updated after accepted iterations.
+- Revision log: update whenever scope, workflow, model/provider choice, cost estimate, output estimate, ROI assumption, or acceptance criteria changes.
+- Document status: use clear states such as `需求诊断中`, `概念待确认`, `PRD 草稿`, `待评审`, `已确认`, or `迭代更新`.
+
+For AI-assisted development projects, keep a running `AI 开发成本、产出预估与 ROI` track:
+
+- Before execution: estimate cost, expected outputs, assumptions, confidence, and measurement window.
+- During execution: record actual tokens, spend, artifacts, model/provider changes, and milestone deviations.
+- After execution: compare estimated vs actual cost/output, calculate ROI only from traceable cost and benefit data.
+- Never invent prices, token usage, account bills, or ROI. Use `待估算`, `待统计`, or `待确认` when data is missing.
+
 ## Workflow
 
 ### Phase 0: Intake
@@ -30,6 +46,7 @@ Clarify what the user has provided:
 - Expected platform and delivery deadline if already known.
 - Project name. If missing, infer a short name from the idea and ask the user to confirm.
 - Project type: software/product feature, internal tool, content project, 漫剧项目, or another domain.
+- Whether this is an AI-assisted development project that needs cost, output, and ROI estimation.
 
 If the user only says "帮我写 PRD", ask for the raw idea or current problem first.
 
@@ -95,6 +112,12 @@ The concept version must include:
 - 成功标志或衡量指标
 - 关键风险与待确认项
 
+For AI-assisted development projects, include a short `投入产出粗估` in Phase 2:
+
+- 预计使用的 AI 工具/平台, such as Codex, Claude, Tuzi API, OpenAI, Gemini, or local models.
+- Expected outputs, such as PRD, prototype, code modules, pages, tests, prompts, reusable scripts, or workflow assets.
+- Cost/benefit assumptions that are already known, with missing values marked `待估算` or `待确认`.
+
 Ask the user to confirm or revise these items. If the user revises direction, stay in Phase 2.
 
 Synchronize the Markdown file with a `概念版对齐` section. The Markdown can contain a concept table, but must still mark the document status as `概念待确认` until the user confirms.
@@ -109,6 +132,16 @@ After concept confirmation, collect missing details for implementation-grade PRD
 - 性能、安全、稳定性、合规、运营配置、验收标准。
 - 开发排期、依赖、风险和上线验证。
 - If the user describes development tools, model providers, team roles, API routing, runtime chains, collaboration rules, AI development cost tracking, output estimation, or ROI calculation needs, record them as workflow inputs. Do not expand them into a full `工作流设计` section until Phase 4.
+
+For AI-assisted development estimates, collect or infer:
+
+- Development stages and milestones.
+- Expected AI tools/platforms per stage.
+- Estimated number of AI turns/API calls, token ranges, or usage units when possible.
+- Pricing source/date, currency, subscription/API boundary, and whether taxes or human labor are included.
+- Expected outputs per stage and their acceptance standards.
+- Benefit assumptions for ROI: saved labor hours, avoided outsourcing cost, faster delivery value, revenue impact, efficiency gain, or reduced rework.
+- Confidence level for each estimate: low, medium, or high.
 
 Use `references/prd-knowledge-base.md` for interview prompts and checklist details.
 
@@ -134,6 +167,7 @@ The `工作流设计` section must:
 - Describe role division, such as Codex for implementation, Claude for review, and model gateways such as Tuzi API for runtime calls when relevant.
 - Describe model/tool routing, fallback rules, environment variables, privacy/security notes, and milestone dependencies when relevant.
 - For AI-assisted development projects, include `AI 开发成本、产出预估与 ROI`: estimate and later track development-stage token usage and spend by platform/tool/model, including Codex and Claude when used. Include totals, currency, pricing source/date, data source, and whether numbers are estimated or actual. Estimate expected outputs such as deliverables, features, pages, documents, tests, reusable assets, and measurable business or efficiency outcomes. Also define ROI benefit metrics such as saved labor hours, avoided outsourcing cost, faster delivery value, generated revenue, cost reduction, or efficiency gains.
+- Include estimate and actual tables separately. The reader should be able to answer: expected cost, expected output, actual cost, actual output, variance, cause, and next correction.
 - Treat model names, prices, provider capabilities, and third-party limits as volatile; mark them `待确认` unless freshly verified.
 - Never invent usage or billing numbers. If platform dashboards, billing pages, exports, or external accounts are needed, state the access risk and ask for explicit permission before accessing them.
 - Never invent estimates or ROI. If cost, output, or benefits are estimates, label assumptions, estimation level, baseline, measurement window, data source, and confidence level.
