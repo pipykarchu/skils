@@ -1,6 +1,6 @@
 ---
 name: prd-writer-agent
-description: Use when a user wants to discuss a product idea, feature request, improvement suggestion, MVP scope, or asks to write, draft, review, or iterate a PRD/product requirements document. Guides Codex through requirement interviewing, three-perspective diagnosis, concept alignment, missing-information follow-up, and final standard PRD output for product, design, development, testing, or vibe coding work.
+description: Use when a user wants to discuss a product idea, feature request, improvement suggestion, MVP scope, or asks to write, draft, review, iterate, visualize, or publish a PRD/product requirements document. Guides Codex through requirement interviewing, three-perspective diagnosis, concept alignment, incremental project-named PRD Markdown generation, missing-information follow-up, final standard PRD output, and a matching project-named PRD web page for product, design, development, testing, or vibe coding work.
 ---
 
 # PRD Writer Agent
@@ -15,6 +15,8 @@ When information is missing, make reasonable assumptions only for low-risk detai
 
 For code, prototype, or visualization requests, first finish the MVP PRD flow, then offer prototype/page visualization as the next phase.
 
+Create and maintain a project-named PRD Markdown file during the conversation. After the PRD is complete, create a matching project-named PRD web page in 皮玺玉风格.
+
 ## Workflow
 
 ### Phase 0: Intake
@@ -24,8 +26,17 @@ Clarify what the user has provided:
 - Product idea, feature request, improvement feedback, existing PRD, screenshots, data, or competitor reference.
 - Desired output: concept version, standard PRD, MVP PRD for vibe coding, review, or iteration.
 - Expected platform and delivery deadline if already known.
+- Project name. If missing, infer a short name from the idea and ask the user to confirm.
 
 If the user only says "帮我写 PRD", ask for the raw idea or current problem first.
+
+Once a project name exists, create or update the workspace output:
+
+- Folder: `./<项目名>/`
+- Markdown: `./<项目名>/<项目名>_PRD.md`
+- Web page after completion: `./<项目名>/<项目名>_PRD.html`
+
+Sanitize only filesystem-forbidden characters: `\ / : * ? " < > |`. Preserve Chinese characters when the filesystem supports them.
 
 ### Phase 1: Three-Perspective Diagnosis
 
@@ -38,6 +49,8 @@ Use three perspectives:
 - 技术视角: 产品形态是小程序/iOS/Android/H5/Web/Web App 还是插件；是否需要账号登录；是否依赖现有系统、数据、权限、AI、支付、风控或合规。
 
 Output in this phase should be a short diagnosis summary, assumptions, and missing questions. Do not produce a full PRD.
+
+Synchronize the Markdown file with a `需求诊断` section containing the current diagnosis, assumptions, and questions.
 
 ### Phase 2: Concept Alignment
 
@@ -56,6 +69,8 @@ The concept version must include:
 
 Ask the user to confirm or revise these items. If the user revises direction, stay in Phase 2.
 
+Synchronize the Markdown file with a `概念版对齐` section. The Markdown can contain a concept table, but must still mark the document status as `概念待确认` until the user confirms.
+
 ### Phase 3: Landing Supplement
 
 After concept confirmation, collect missing details for implementation-grade PRD:
@@ -67,6 +82,8 @@ After concept confirmation, collect missing details for implementation-grade PRD
 - 开发排期、依赖、风险和上线验证。
 
 Use `references/prd-knowledge-base.md` for interview prompts and checklist details.
+
+Synchronize the Markdown file after each confirmed detail batch. Add `待确认` markers instead of leaving blanks.
 
 ### Phase 4: Standard PRD Output
 
@@ -81,6 +98,10 @@ The PRD must:
 - Mark unclear items as `待确认` instead of hiding gaps.
 - Include "本版不做" so MVP boundaries are explicit.
 
+Update `<项目名>_PRD.md` as the canonical PRD file. Then generate `<项目名>_PRD.html` from the completed Markdown using `references/prd-web-output-style.md`.
+
+The HTML must be self-contained, readable without a build step, and reflect the same PRD content as the Markdown.
+
 ### Iteration Mode
 
 When the user provides changes after a PRD exists:
@@ -89,6 +110,7 @@ When the user provides changes after a PRD exists:
 - Add or update the revision log.
 - Preserve prior confirmed decisions unless the user explicitly changes them.
 - If a change conflicts with the concept version, return to Phase 2 for realignment.
+- Keep the Markdown and HTML synchronized after each accepted iteration.
 
 ## Quality Bar
 
@@ -108,3 +130,4 @@ Use these tools when relevant:
 
 - Read `references/prd-knowledge-base.md` when diagnosing requirements, asking interview questions, checking risk, or reviewing PRD quality.
 - Read `references/prd-document-template.md` before producing a full PRD or PRD iteration.
+- Read `references/prd-web-output-style.md` before creating or updating the project-named PRD web page.
