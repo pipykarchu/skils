@@ -1,6 +1,6 @@
 ---
 name: screenplay-director
-description: Turn a story, outline, synopsis, character idea, or rough plot into a professional Chinese screenplay, infer a fitting Chinese title, and create both Markdown and Word (.docx) files. Use when the user wants to write a script, generate a screenplay, split a story into scenes or segments under 400 Chinese characters each, polish character dialogue, save the result as MD/Word, or run a Tuzi API multi-model workflow where DeepSeek drafts, Claude/GPT improves characters and dialogue, and Gemini checks long-form consistency.
+description: Turn a story, novel excerpt, raw text, outline, synopsis, character idea, or rough plot into a professional Chinese screenplay, first extract a plot outline, infer a fitting Chinese title, build stable character profile files/descriptions for consistency, and create both Markdown and Word (.docx) files. Use when the user wants to write a script, convert a novel/text into a screenplay, generate a screenplay, split a story into scenes or segments under 400 Chinese characters each, polish character dialogue, save the result as MD/Word, or run a Tuzi API multi-model workflow where DeepSeek drafts, Claude/GPT improves characters and dialogue, and Gemini checks long-form consistency.
 ---
 
 # Screenplay Director
@@ -18,13 +18,16 @@ Convert the user's story into a logical, professional, shootable Chinese screenp
 - 对白要符合人物身份、关系、情绪和场景压力。
 - 优先写可见动作、可拍摄画面和可表演对白，少用解释性旁白。
 - 片段之间必须有因果关系，每段结尾尽量留下钩子。
+- 可以把小说、长文本、故事梗概、散乱文字整理成剧本；先提炼剧情大纲，再改写成可拍摄剧本。
+- 剧本开头必须添加“剧情大纲提炼”，说明故事主线、关键事件、人物关系和改编取舍。
 - 用户提供故事后，先根据故事内容想一个合适的中文标题；不要直接使用“未命名剧本”。
+- 必须建立“人物设定角色档案”，并在后续片段中保持角色外貌、发型、服装、性格、口头禅、情绪表达和绘图固定提示词一致。
 - 默认创建两份文件：`.md` 和 `.docx`。
 - 创建文件前说明风险：会在本地写入新文件；文件名会根据标题生成；为避免覆盖已有文件，默认加时间戳。
 
 ## Start Conditions
 
-When the user says "写个剧本", "把故事改成剧本", "启动剧本流程", "拆成片段", "生成专业剧本", "保存成 Word", "输出 MD 和 Word", or provides a story and asks for a script, start this workflow.
+When the user says "写个剧本", "把故事改成剧本", "小说改剧本", "文字整理成剧本", "启动剧本流程", "拆成片段", "生成专业剧本", "保存成 Word", "输出 MD 和 Word", or provides a story/novel/text and asks for a script, start this workflow.
 
 Ask up to 3 short questions only if the story is too vague to write:
 
@@ -36,7 +39,20 @@ If enough story material is present, do not ask questions. Start writing.
 
 ## Standard Workflow
 
-### 1. Title and File Plan
+### 1. Plot Outline Extraction
+
+At the beginning of the output, extract the plot outline before writing the screenplay.
+
+Include:
+
+- 一句话故事：用一句话说清主角、目标、阻力和结果方向。
+- 故事主线：按因果关系概括开端、发展、转折、高潮、结尾。
+- 关键事件：列出必须保留的事件，删除无戏剧功能的枝节。
+- 人物关系：说明主角、男主/女主、反派、配角之间的关系和矛盾。
+- 改编取舍：说明从小说/原始文字改成剧本时做了哪些压缩、合并或强化。
+- 类型和情绪：说明适合的类型、节奏和观众情绪曲线。
+
+### 2. Title and File Plan
 
 Infer a concise, marketable Chinese title from the story.
 
@@ -60,7 +76,7 @@ File output rules:
 - The `.docx` file must contain the same content with readable headings and paragraphs.
 - Prefer a structured Word writer such as `python-docx`. If Word generation tooling is unavailable, still create the Markdown file and clearly explain why `.docx` could not be created.
 
-### 2. Story Diagnosis
+### 3. Story Diagnosis
 
 Briefly identify:
 
@@ -71,17 +87,54 @@ Briefly identify:
 - 结局方向
 - 适合的叙事结构
 
-### 3. Character Table
+### 4. Character Profile Task Table
 
-List main characters with:
+Create a stable character profile for every important role. This is mandatory for role consistency, comic production, image prompting, and LoRA training.
 
-- 角色定位
-- 目标
-- 恐惧或弱点
-- 与其他角色的关系
-- 本剧中的变化
+Use this template:
 
-### 4. Segment Plan
+```md
+### 角色名：
+
+- 年龄：
+- 身份：
+- 外貌：
+- 发型：
+- 服装：
+- 性格：
+- 口头禅：
+- 情绪表达：
+- 人物目标：
+- 人物弱点：
+- 与其他角色关系：
+- 核心人物变化：
+  - 初期：
+  - 中期：
+  - 后期：
+- 不同时期人物性格身份：
+  - 初期身份/性格：
+  - 中期身份/性格：
+  - 后期身份/性格：
+- 绘图固定提示词：
+- 禁止变化：
+```
+
+Rules:
+
+- 女主、男主、反派、关键配角都要有角色档案。
+- “核心人物变化”写角色弧光：初期是什么人，中期被什么改变，后期变成什么人。
+- “不同时期人物性格身份”用于长篇一致性：角色身份、性格可以成长，但不能无理由突变。
+- “绘图固定提示词”要稳定，便于 AI 生图、漫剧分镜和 LoRA 训练。
+- “禁止变化”写清不能变的识别特征，例如发色、发型、标志服装、疤痕、饰品、体型、气质。
+- 角色每次出场时，都必须沿用角色档案中的固定描述；如果剧情需要换装或状态变化，必须说明原因。
+
+Success marker:
+
+- 女主、男主、反派每次出场都有固定描述。
+- 同一角色在不同片段中的外貌、发型、服装、口头禅、情绪表达和绘图固定提示词不冲突。
+- 角色成长来自剧情压力，而不是随机改性格或改身份。
+
+### 5. Segment Plan
 
 For each segment, include:
 
@@ -94,8 +147,9 @@ For each segment, include:
 - 本段目标
 - 本段冲突
 - 本段结尾钩子
+- 出场人物固定描述
 
-### 5. Screenplay
+### 6. Screenplay
 
 Use this format for every segment:
 
@@ -105,6 +159,7 @@ Use this format for every segment:
 **场景**：地点 / 时间
 **人物**：人物 A、人物 B
 **戏剧功能**：本段承担的剧情作用
+**出场人物固定描述**：沿用角色档案中的外貌、发型、服装、气质和绘图固定提示词
 
 【画面】
 描述可拍摄的视觉动作、环境、人物状态。
@@ -123,21 +178,25 @@ Use this format for every segment:
 用一个动作、台词、发现或反转结束本段。
 ```
 
-### 6. Quality Check
+### 7. Quality Check
 
 Before finalizing, verify:
 
+- 是否已经在开头完成剧情大纲提炼。
 - 每个片段是否不超过 400 个中文字符。
 - 每个片段是否有明确戏剧功能。
 - 主角目标是否清楚。
 - 冲突是否逐步升级。
 - 人物行为是否符合动机。
 - 对白是否像人在压力下说话。
+- 是否已经建立人物设定角色档案。
+- 女主、男主、反派每次出场是否都有固定描述。
+- 角色外貌、发型、服装、性格、口头禅、情绪表达和绘图固定提示词是否前后一致。
 - 结尾是否有继续观看的动力。
 - Markdown 结构是否清晰。
 - 文件输出计划是否清楚，且不会覆盖已有文件。
 
-### 7. Save Files
+### 8. Save Files
 
 After drafting and quality checking, write the final Markdown content to disk and generate the Word document.
 
@@ -226,15 +285,19 @@ Gemini consistency check:
 ```md
 # 剧本标题
 
-## 1. 故事诊断
+## 1. 剧情大纲提炼
 
-## 2. 人物表
+## 2. 标题与文件计划
 
-## 3. 片段总览
+## 3. 故事诊断
 
-## 4. 正式剧本
+## 4. 人物设定角色档案
 
-## 5. 后续优化建议
+## 5. 片段总览
 
-## 6. 文件输出
+## 6. 正式剧本
+
+## 7. 后续优化建议
+
+## 8. 文件输出
 ```

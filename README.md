@@ -27,13 +27,14 @@ C:\Users\Administrator\.codex\skills\screenplay-director\SKILL.md
 | Skill 名称 | 什么时候激活 | 简单用法 |
 |---|---|---|
 | `prd-writer-agent` | 想把产品想法、功能需求、MVP、改进建议整理成 PRD 时使用。它会先做需求访谈和概念对齐，再输出标准 PRD。 | `$prd-writer-agent 帮我把一个 AI 漫剧生成工具整理成 MVP PRD` |
-| `screenplay-director` | 想把故事、梗概、人物设定改成中文专业剧本时使用。它会根据故事自动起标题，做故事诊断、人物表、片段拆分，并创建 Markdown 和 Word 文件。 | `$screenplay-director 写个剧本：一个外卖员在暴雨夜送最后一单，发现收餐人是三年前害他家破人亡的人` |
+| `screenplay-director` | 想把故事、小说片段或散乱文字整理成中文专业剧本时使用。它会先提炼剧情大纲，自动起标题，建立人物设定角色档案，保持男女主和反派出场描述一致，并创建 Markdown 和 Word 文件。 | `$screenplay-director 把这段小说整理成剧本，并保持男女主和反派设定一致` |
 | `script-to-storyboard` | 想把剧本、小说片段、Word、PDF、Markdown 或网页内容拆成分镜头脚本，并输出可用于 AI 生图的镜头提示词时使用。 | `$script-to-storyboard 把这个剧本文件转成分镜表，输出 Markdown 和 Excel` |
 
 ## 简单判断
 
 - 要写产品需求文档，用 `prd-writer-agent`。
-- 要写故事剧本、短剧、漫剧脚本，并保存成 Markdown/Word，用 `screenplay-director`。
+- 要把故事、小说或文字整理成剧本，并保存成 Markdown/Word，用 `screenplay-director`。
+- 要稳定女主、男主、反派的人物设定、绘图固定提示词和禁止变化特征，也用 `screenplay-director`。
 - 要把已有剧本拆成分镜头、景别、画面描述和 AI 生图提示词，用 `script-to-storyboard`。
 
 ## 激活方式
@@ -41,7 +42,7 @@ C:\Users\Administrator\.codex\skills\screenplay-director\SKILL.md
 Codex 会根据你的需求自动判断是否使用 skill。也可以手动指定：
 
 ```text
-$screenplay-director 写个剧本：一个小白兔的故事
+$screenplay-director 把这段小说整理成剧本，并保持女主、男主、反派设定一致
 ```
 
 ```text
