@@ -1,4 +1,4 @@
 interface:
   display_name: "PRD Writer Agent"
-  short_description: "支持产品/漫剧PRD、AI开发工作流、成本与ROI统计"
-  default_prompt: "Use $prd-writer-agent to clarify my product or comic-drama project idea, maintain a PRD Markdown file, include AI development token/cost/ROI tracking when relevant, and generate a matching PRD web page."
+  short_description: "支持产品/漫剧PRD、AI开发成本产出估算与ROI统计"
+  default_prompt: "Use $prd-writer-agent to clarify my product or comic-drama project idea, maintain a PRD Markdown file, include AI development token/cost/output/ROI estimation and tracking when relevant, and generate a matching PRD web page."

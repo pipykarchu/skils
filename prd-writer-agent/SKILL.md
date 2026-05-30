@@ -1,6 +1,6 @@
 ---
 name: prd-writer-agent
-description: Use when a user wants to discuss a product idea, feature request, improvement suggestion, MVP scope, comic-drama/manju project, short-form serialized content project, AI-assisted development workflow, token/cost/ROI tracking for AI development, or asks to write, draft, review, iterate, visualize, or publish a PRD/product requirements document. Guides Codex through requirement interviewing, three-perspective diagnosis, concept alignment, incremental project-named PRD Markdown generation, missing-information follow-up, final standard PRD output, and a matching project-named PRD web page for product, design, content production, development, testing, or vibe coding work.
+description: Use when a user wants to discuss a product idea, feature request, improvement suggestion, MVP scope, comic-drama/manju project, short-form serialized content project, AI-assisted development workflow, token/cost/output/ROI estimation and tracking for AI development, or asks to write, draft, review, iterate, visualize, or publish a PRD/product requirements document. Guides Codex through requirement interviewing, three-perspective diagnosis, concept alignment, incremental project-named PRD Markdown generation, missing-information follow-up, final standard PRD output, and a matching project-named PRD web page for product, design, content production, development, testing, or vibe coding work.
 ---
 
 # PRD Writer Agent
@@ -108,7 +108,7 @@ After concept confirmation, collect missing details for implementation-grade PRD
 - 数据字段、埋点、指标、数据迁移、第三方依赖。
 - 性能、安全、稳定性、合规、运营配置、验收标准。
 - 开发排期、依赖、风险和上线验证。
-- If the user describes development tools, model providers, team roles, API routing, runtime chains, collaboration rules, AI development cost tracking, or ROI calculation needs, record them as workflow inputs. Do not expand them into a full `工作流设计` section until Phase 4.
+- If the user describes development tools, model providers, team roles, API routing, runtime chains, collaboration rules, AI development cost tracking, output estimation, or ROI calculation needs, record them as workflow inputs. Do not expand them into a full `工作流设计` section until Phase 4.
 
 Use `references/prd-knowledge-base.md` for interview prompts and checklist details.
 
@@ -133,10 +133,10 @@ The `工作流设计` section must:
 - Separate `开发工作流` from `产品运行工作流`.
 - Describe role division, such as Codex for implementation, Claude for review, and model gateways such as Tuzi API for runtime calls when relevant.
 - Describe model/tool routing, fallback rules, environment variables, privacy/security notes, and milestone dependencies when relevant.
-- For AI-assisted development projects, include `AI 开发成本统计与 ROI`: track development-stage token usage and spend by platform/tool/model, including Codex and Claude when used. Include totals, currency, pricing source/date, data source, and whether numbers are actual or estimated. Also define ROI benefit metrics such as saved labor hours, avoided outsourcing cost, faster delivery value, generated revenue, cost reduction, or efficiency gains.
+- For AI-assisted development projects, include `AI 开发成本、产出预估与 ROI`: estimate and later track development-stage token usage and spend by platform/tool/model, including Codex and Claude when used. Include totals, currency, pricing source/date, data source, and whether numbers are estimated or actual. Estimate expected outputs such as deliverables, features, pages, documents, tests, reusable assets, and measurable business or efficiency outcomes. Also define ROI benefit metrics such as saved labor hours, avoided outsourcing cost, faster delivery value, generated revenue, cost reduction, or efficiency gains.
 - Treat model names, prices, provider capabilities, and third-party limits as volatile; mark them `待确认` unless freshly verified.
 - Never invent usage or billing numbers. If platform dashboards, billing pages, exports, or external accounts are needed, state the access risk and ask for explicit permission before accessing them.
-- Never invent ROI. If benefits are estimates, label the assumptions, baseline, measurement window, and confidence level.
+- Never invent estimates or ROI. If cost, output, or benefits are estimates, label assumptions, estimation level, baseline, measurement window, data source, and confidence level.
 - Avoid mixing product runtime rules with developer collaboration rules.
 
 Update `<项目名>_PRD.md` as the canonical PRD file. Then generate `<项目名>_PRD.html` from the completed Markdown using `references/prd-web-output-style.md`.
@@ -151,7 +151,7 @@ When the user provides changes after a PRD exists:
 - Add or update the revision log.
 - Preserve prior confirmed decisions unless the user explicitly changes them.
 - If a change conflicts with the concept version, return to Phase 2 for realignment.
-- If the change touches development tools, model/provider choice, model routing, team roles, API base URLs, runtime chains, milestones, environment variables, privacy, security, delivery dependencies, AI development token/cost statistics, or ROI assumptions, update the PRD's `工作流设计` section as well.
+- If the change touches development tools, model/provider choice, model routing, team roles, API base URLs, runtime chains, milestones, environment variables, privacy, security, delivery dependencies, AI development token/cost/output estimates, actual statistics, or ROI assumptions, update the PRD's `工作流设计` section as well.
 - Keep the Markdown and HTML synchronized after each accepted iteration.
 
 ## Quality Bar

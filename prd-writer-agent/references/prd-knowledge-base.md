@@ -129,12 +129,15 @@ The section should separate:
 - 产品运行工作流: how the actual product processes user input and produces output.
 - 模型与工具路由: which model/tool handles each task, fallback choices, and volatile provider assumptions.
 - 配置与安全: API keys, base URLs, privacy, sensitive data, and third-party risk.
-- AI 开发成本统计与 ROI: for AI-assisted development, track development-stage tokens and spend by platform/tool/model, including Codex and Claude when used, then define benefit metrics for later ROI calculation.
+- AI 开发成本、产出预估与 ROI: for AI-assisted development, estimate cost and expected outputs before execution, track development-stage tokens/spend/output by platform/tool/model during execution, including Codex and Claude when used, then define benefit metrics for later ROI calculation.
 
 For AI development cost tracking:
 
+- Estimate before execution, then compare estimates with actuals after each milestone.
 - Track by platform/tool/model and by stage when possible.
 - Include input tokens, output tokens, cache/thinking/other platform-specific tokens, total tokens, amount, currency, pricing source, pricing date, and data source.
+- Estimate expected outputs: PRDs, technical designs, features, pages, APIs, tests, scripts, prompts, reusable components, and business or efficiency outcomes.
+- Label the estimate level: rough estimate, planning estimate, execution estimate, or actual.
 - Distinguish actual billing data from estimates.
 - Mark missing values as `待统计` or `待确认`.
 - Do not invent usage or billing numbers. Ask for explicit permission before accessing external billing dashboards, invoices, exports, or accounts.
@@ -142,7 +145,7 @@ For AI development cost tracking:
 - Use a clear ROI formula, such as `AI 开发 ROI = (AI 产生总收益 - AI 开发总成本) / AI 开发总成本 * 100%`.
 - For estimated benefits, record baseline, post-AI result, measurement window, data source, confidence level, and assumptions.
 
-When users update tool choice, model provider, API routing, role division, runtime steps, milestones, privacy/security rules, token usage, development cost, benefit assumptions, or ROI calculation, update `工作流设计` and the revision log.
+When users update tool choice, model provider, API routing, role division, runtime steps, milestones, privacy/security rules, token usage, development cost, output estimates, benefit assumptions, or ROI calculation, update `工作流设计` and the revision log.
 
 ## Requirement Interview Prompts
 
