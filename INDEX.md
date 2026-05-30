@@ -18,14 +18,17 @@ C:\Users\Administrator\.codex\skills\
 |---|---|---|---|
 | `prd-writer-agent` | 想把产品想法、功能需求、MVP、改进建议整理成 PRD 时使用。它会先做需求访谈和概念对齐，再输出标准 PRD。 | 直接说“写 PRD”“帮我整理产品需求”，或显式输入 `$prd-writer-agent`。 | `$prd-writer-agent 帮我把一个 AI 漫剧生成工具整理成 MVP PRD` |
 | `screenplay-director` | 想把故事、梗概、人物设定改成中文专业剧本时使用。它会做故事诊断、人物表、片段拆分和正式剧本，每个片段不超过 400 字。 | 直接说“写个剧本”“把这个故事改成剧本”，或显式输入 `$screenplay-director`。 | `$screenplay-director 写个剧本：一个外卖员在暴雨夜送最后一单，发现收餐人是三年前害他家破人亡的人` |
+| `script-to-storyboard` | 想把剧本、小说片段、Word、PDF、Markdown 或网页内容拆成分镜头脚本，并输出可用于 AI 生图的镜头提示词时使用。 | 直接说“剧本转分镜”“生成漫剧分镜脚本”，或显式输入 `$script-to-storyboard`。 | `$script-to-storyboard 把这个剧本文件转成分镜表，输出 Markdown 和 Excel` |
 
 ## 简单判断
 
 - 要写产品需求文档，用 `prd-writer-agent`。
 - 要写故事剧本、短剧、漫剧脚本，用 `screenplay-director`。
+- 要把已有剧本拆成分镜头、景别、画面描述和 AI 生图提示词，用 `script-to-storyboard`。
 
 ## 注意事项
 
 - `screenplay-director` 支持兔子 API 多模型流程，但只有用户明确要求调用 API 时才应该调用。
+- `script-to-storyboard` 支持通过兔子 API 先用 DeepSeek 写分镜初稿，再用 Claude 改对白、节奏和情绪。
 - 调用外部 API 会消耗余额，也会把输入内容发送到第三方服务。
 - API Key 不要写进仓库；默认从环境变量 `TUZI_API_KEY` 读取。

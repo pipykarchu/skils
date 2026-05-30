@@ -1,0 +1,4 @@
+interface:
+  display_name: "剧本转分镜脚本"
+  short_description: "把剧本转成适合AI生图的中文分镜脚本表。"
+  default_prompt: "Use $script-to-storyboard to turn a screenplay file into a Chinese storyboard script with shot prompts."
