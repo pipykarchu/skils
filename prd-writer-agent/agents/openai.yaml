@@ -1,4 +1,4 @@
 interface:
   display_name: "PRD Writer Agent"
-  short_description: "通过需求访谈同步产出PRD Markdown和同名评审网页"
-  default_prompt: "Use $prd-writer-agent to clarify my product idea, maintain a PRD Markdown file, and generate a matching PRD web page."
+  short_description: "支持产品和漫剧项目需求访谈并生成PRD文档与评审网页"
+  default_prompt: "Use $prd-writer-agent to clarify my product or comic-drama project idea, maintain a PRD Markdown file, and generate a matching PRD web page."

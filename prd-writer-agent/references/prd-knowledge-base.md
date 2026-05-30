@@ -10,6 +10,88 @@ PRD differs from MRD and BRD:
 - BRD focuses on business goals and commercial feasibility.
 - PRD focuses on product execution and implementation clarity.
 
+## 漫剧项目 PRD
+
+When the user asks for a 漫剧项目 PRD, the PRD defines what the serialized work should become. It is not mainly a software requirements document. It should make the intended story, audience, emotional experience, production format, and acceptance standard clear at a glance.
+
+### Required Inputs
+
+Collect or infer these fields:
+
+- 题材: 都市、古风、复仇、恋爱、悬疑等。
+- 目标观众: age band, gender skew, platform habits, content preference.
+- 主角人设: identity, desire, weakness, emotional wound, contrast, transformation path.
+- 爽点类型: 复仇打脸、身份反转、逆袭、强情绪拉扯、甜宠、悬念、权谋、误会解除等。
+- 集数.
+- 每集时长.
+- 画风: 韩漫感、国漫感、写实、强情绪、快节奏、电影感, etc.
+- 输出格式: 竖屏/横屏, ratio, resolution, file format, subtitle/bubble requirements, delivery package.
+- 禁止内容: forbidden topics, visual limits, platform compliance, violence/sexuality/minors/political/religious constraints.
+- 成功标准: what makes the project pass review; what lets the team understand what to produce.
+
+### Interview Questions
+
+- 这部漫剧的一句话定位是什么?
+- 目标观众是谁? 他们为什么会追更?
+- 前 3 秒要用什么钩子抓住观众?
+- 主角最强的代入点是什么? 他/她的欲望和弱点是什么?
+- 最大爽点是什么? 是复仇、逆袭、身份反转、恋爱拉扯、悬疑解谜还是其他?
+- 每集 60 秒内, 情绪节奏如何安排: 开场钩子、冲突升级、反转、结尾悬念?
+- 30 集或指定集数中, 哪几集是关键反转点、高潮点和收束点?
+- 画风要接近什么参考? 人物、镜头、色彩、分镜节奏有什么限制?
+- 输出给谁使用: 编剧、分镜师、画师、剪辑、配音、投放团队还是平台审核?
+- 有哪些内容绝对不能出现?
+- 成功标准是一眼看懂作品定位, 还是需要满足完播率、点击率、追更率等平台指标?
+
+### Recommended Structure
+
+Use this structure for 漫剧 PRD:
+
+1. 项目概述: project name, one-line positioning, genre, total episodes, duration per episode, target platform.
+2. 目标观众: audience profile, emotional expectation, viewing scenario, why they continue watching.
+3. 核心卖点: main hook, emotional promise,爽点类型, differentiation.
+4. 人物设定: protagonist, antagonist, key supporting roles, relationships, character arcs.
+5. 世界观与故事基调: setting, tone, conflict source, taboo boundaries.
+6. 剧情结构: beginning, escalation, midpoint reversal, climax, ending or next-season hook.
+7. 分集节奏: table by episode with core event, emotional beat, visual focus, ending hook.
+8. 画面风格: art style, composition, color, panel rhythm, character expression, reference constraints.
+9. 输出格式: aspect ratio, resolution, delivery files, subtitles, bubbles, naming, package structure.
+10. 禁止内容: platform compliance and creative boundaries.
+11. 验收标准: content, structure, visual, rhythm, format, and business success criteria.
+
+### Episode Rhythm Table
+
+Use this table for serialized planning:
+
+| 集数 | 时长 | 核心事件 | 情绪节奏 | 爽点/钩子 | 画面重点 | 结尾悬念 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | 60 秒 | [事件] | [开场钩子 -> 冲突 -> 反转] | [爽点] | [画面] | [悬念] |
+
+### Example User Prompt
+
+```text
+帮我写一份漫剧项目 PRD。
+题材：都市复仇爽文
+集数：30集
+每集：60秒
+风格：韩漫感，强情绪，快节奏
+目标：适合短视频平台连载
+请包含人物设定、剧情结构、分集节奏、画面风格和验收标准。
+```
+
+### Success Standard
+
+The PRD succeeds when a reader can immediately answer:
+
+- 这部剧是什么题材?
+- 给谁看?
+- 主角是谁, 凭什么让观众代入?
+- 每集靠什么爽点和钩子推动追更?
+- 画面应该长什么样?
+- 输出什么文件?
+- 什么内容不能做?
+- 怎么判断这部漫剧做对了?
+
 ## Core Writing Principles
 
 - Start with why: explain the background, market or user problem, business connection, and value.

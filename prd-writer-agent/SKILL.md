@@ -1,6 +1,6 @@
 ---
 name: prd-writer-agent
-description: Use when a user wants to discuss a product idea, feature request, improvement suggestion, MVP scope, or asks to write, draft, review, iterate, visualize, or publish a PRD/product requirements document. Guides Codex through requirement interviewing, three-perspective diagnosis, concept alignment, incremental project-named PRD Markdown generation, missing-information follow-up, final standard PRD output, and a matching project-named PRD web page for product, design, development, testing, or vibe coding work.
+description: Use when a user wants to discuss a product idea, feature request, improvement suggestion, MVP scope, comic-drama/manju project, short-form serialized content project, or asks to write, draft, review, iterate, visualize, or publish a PRD/product requirements document. Guides Codex through requirement interviewing, three-perspective diagnosis, concept alignment, incremental project-named PRD Markdown generation, missing-information follow-up, final standard PRD output, and a matching project-named PRD web page for product, design, content production, development, testing, or vibe coding work.
 ---
 
 # PRD Writer Agent
@@ -27,6 +27,7 @@ Clarify what the user has provided:
 - Desired output: concept version, standard PRD, MVP PRD for vibe coding, review, or iteration.
 - Expected platform and delivery deadline if already known.
 - Project name. If missing, infer a short name from the idea and ask the user to confirm.
+- Project type: software/product feature, internal tool, content project, 漫剧项目, or another domain.
 
 If the user only says "帮我写 PRD", ask for the raw idea or current problem first.
 
@@ -37,6 +38,31 @@ Once a project name exists, create or update the workspace output:
 - Web page after completion: `./<项目名>/<项目名>_PRD.html`
 
 Sanitize only filesystem-forbidden characters: `\ / : * ? " < > |`. Preserve Chinese characters when the filesystem supports them.
+
+### Special Case: 漫剧项目 PRD
+
+When the project is a 漫剧, short-form serialized drama, comic-drama, or short-video narrative series, treat the PRD as a work-definition document: define "这部漫剧要做成什么样", not software features.
+
+Use the adapted three perspectives:
+
+- 观众视角: 目标观众、情绪期待、爽点类型、主角代入感、追更理由。
+- 平台/商业视角: 短视频平台适配、完播率、前 3 秒钩子、连载节奏、传播点。
+- 制作视角: 题材、集数、每集时长、画风、输出格式、禁止内容、制作边界。
+
+Required concept fields:
+
+- 题材: 都市、古风、复仇、恋爱、悬疑等。
+- 目标观众。
+- 主角人设。
+- 爽点类型。
+- 集数。
+- 每集时长。
+- 画风。
+- 输出格式。
+- 禁止内容。
+- 成功标准。
+
+For 漫剧项目, use the specialized structure in `references/prd-knowledge-base.md`. Success means the reader can understand at a glance what this drama is supposed to become.
 
 ### Phase 1: Three-Perspective Diagnosis
 
