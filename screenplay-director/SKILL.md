@@ -1,6 +1,6 @@
 ---
 name: screenplay-director
-description: Turn a story, outline, synopsis, character idea, or rough plot into a professional Chinese screenplay in Markdown. Use when the user wants to write a script, generate a screenplay, split a story into scenes or segments under 400 Chinese characters each, polish character dialogue, or run a Tuzi API multi-model workflow where DeepSeek drafts, Claude/GPT improves characters and dialogue, and Gemini checks long-form consistency.
+description: Turn a story, outline, synopsis, character idea, or rough plot into a professional Chinese screenplay, infer a fitting Chinese title, and create both Markdown and Word (.docx) files. Use when the user wants to write a script, generate a screenplay, split a story into scenes or segments under 400 Chinese characters each, polish character dialogue, save the result as MD/Word, or run a Tuzi API multi-model workflow where DeepSeek drafts, Claude/GPT improves characters and dialogue, and Gemini checks long-form consistency.
 ---
 
 # Screenplay Director
@@ -18,10 +18,13 @@ Convert the user's story into a logical, professional, shootable Chinese screenp
 - 对白要符合人物身份、关系、情绪和场景压力。
 - 优先写可见动作、可拍摄画面和可表演对白，少用解释性旁白。
 - 片段之间必须有因果关系，每段结尾尽量留下钩子。
+- 用户提供故事后，先根据故事内容想一个合适的中文标题；不要直接使用“未命名剧本”。
+- 默认创建两份文件：`.md` 和 `.docx`。
+- 创建文件前说明风险：会在本地写入新文件；文件名会根据标题生成；为避免覆盖已有文件，默认加时间戳。
 
 ## Start Conditions
 
-When the user says "写个剧本", "把故事改成剧本", "启动剧本流程", "拆成片段", "生成专业剧本", or provides a story and asks for a script, start this workflow.
+When the user says "写个剧本", "把故事改成剧本", "启动剧本流程", "拆成片段", "生成专业剧本", "保存成 Word", "输出 MD 和 Word", or provides a story and asks for a script, start this workflow.
 
 Ask up to 3 short questions only if the story is too vague to write:
 
@@ -33,7 +36,31 @@ If enough story material is present, do not ask questions. Start writing.
 
 ## Standard Workflow
 
-### 1. Story Diagnosis
+### 1. Title and File Plan
+
+Infer a concise, marketable Chinese title from the story.
+
+Title rules:
+
+- 2-12 个中文字符优先；长故事可用 12-18 个中文字符。
+- 标题要体现主角、核心冲突、反转、情绪或类型感。
+- 避免空泛标题，例如“一个故事”“新的开始”“命运”。
+- If needed, provide 2-3 title candidates and choose the strongest one before writing.
+
+File output rules:
+
+- If the user specifies an output directory, use it.
+- Otherwise create files under the current workspace in `剧本输出/<安全标题>_<YYYYMMDD-HHMMSS>/`.
+- Sanitize filename characters that are unsafe on Windows: `\ / : * ? " < > |`.
+- Create:
+  - `<安全标题>.md`
+  - `<安全标题>.docx`
+- Do not overwrite existing files. If a file exists, append a timestamp or numeric suffix.
+- The `.md` file must contain the full screenplay output.
+- The `.docx` file must contain the same content with readable headings and paragraphs.
+- Prefer a structured Word writer such as `python-docx`. If Word generation tooling is unavailable, still create the Markdown file and clearly explain why `.docx` could not be created.
+
+### 2. Story Diagnosis
 
 Briefly identify:
 
@@ -44,7 +71,7 @@ Briefly identify:
 - 结局方向
 - 适合的叙事结构
 
-### 2. Character Table
+### 3. Character Table
 
 List main characters with:
 
@@ -54,7 +81,7 @@ List main characters with:
 - 与其他角色的关系
 - 本剧中的变化
 
-### 3. Segment Plan
+### 4. Segment Plan
 
 For each segment, include:
 
@@ -68,7 +95,7 @@ For each segment, include:
 - 本段冲突
 - 本段结尾钩子
 
-### 4. Screenplay
+### 5. Screenplay
 
 Use this format for every segment:
 
@@ -96,7 +123,7 @@ Use this format for every segment:
 用一个动作、台词、发现或反转结束本段。
 ```
 
-### 5. Quality Check
+### 6. Quality Check
 
 Before finalizing, verify:
 
@@ -108,6 +135,18 @@ Before finalizing, verify:
 - 对白是否像人在压力下说话。
 - 结尾是否有继续观看的动力。
 - Markdown 结构是否清晰。
+- 文件输出计划是否清楚，且不会覆盖已有文件。
+
+### 7. Save Files
+
+After drafting and quality checking, write the final Markdown content to disk and generate the Word document.
+
+Final response must include:
+
+- 剧本标题
+- Markdown 文件路径
+- Word 文件路径
+- 简短说明是否已成功创建
 
 ## Tuzi API Multi-Model Workflow
 
@@ -196,4 +235,6 @@ Gemini consistency check:
 ## 4. 正式剧本
 
 ## 5. 后续优化建议
+
+## 6. 文件输出
 ```
