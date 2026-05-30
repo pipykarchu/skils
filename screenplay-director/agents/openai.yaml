@@ -1,0 +1,4 @@
+interface:
+  display_name: "剧本导演"
+  short_description: "将故事拆成逻辑清晰、可拍摄、每段不超400字的中文专业剧本。"
+  default_prompt: "Use $screenplay-director to turn my story into a Chinese screenplay split into segments under 400 Chinese characters each."
