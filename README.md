@@ -62,7 +62,6 @@ $manju-production-workflow 启动漫剧项目《重生后我不再忍了》
 ## 维护规则
 
 - 新增 skill 后，同步更新这个 `README.md`。
-- 新增 skill 后，同步更新 `INDEX.md`。
 - 更新 skill 的用途、触发方式、外部依赖或风险说明后，同步更新这个 `README.md`。
 - 更新 skill 的 UI 元数据时，同步更新对应 `agents/openai.yaml`。
 - 删除或停用 skill 后，从这个 `README.md` 移除或标注“已停用”。
