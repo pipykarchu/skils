@@ -1,0 +1,7 @@
+interface:
+  display_name: "Storyboard Image Prompts"
+  short_description: "Create platform-ready storyboard image prompts."
+  default_prompt: "Use $storyboard-image-prompts to turn this script and storyboard into platform-ready drawing prompts."
+
+policy:
+  allow_implicit_invocation: true
