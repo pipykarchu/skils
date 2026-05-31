@@ -1,0 +1,7 @@
+interface:
+  display_name: "漫剧工作流看板"
+  short_description: "生成漫剧生产流程的本地网页看板"
+  brand_color: "#1D3B34"
+  default_prompt: "Use $manju-workflow-dashboard to generate a local HTML dashboard for this manju production workflow."
+policy:
+  allow_implicit_invocation: true

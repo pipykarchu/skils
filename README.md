@@ -31,6 +31,7 @@ C:\Users\Administrator\.codex\skills\screenplay-director\SKILL.md
 | `script-to-storyboard` | 想把剧本、小说片段、Word、PDF、Markdown 或网页内容拆成客观分镜头脚本，并输出可用于 AI 生图的 MD/Excel 分镜表时使用。 | `$script-to-storyboard 根据剧本文件和片段名称“妈妈病了”建立新的 MD 和 Excel 分镜脚本` |
 | `storyboard-image-prompts` | 想根据剧本、世界观、分镜表、角色档案或漫剧短剧分镜生成 AI 绘图提示词，并按人物、场景、世界观规则、连续性和生产平台选择合适模型时使用。 | `$storyboard-image-prompts 根据这份剧本、世界观和分镜表生成绘图提示词，并推荐每镜使用的平台和模型` |
 | `manju-production-workflow` | 想从 0 到 1 做完整漫剧生产流水线时使用。它会协调 PRD、SOP、角色档案、剧本、分镜、AI 生图提示词和质检。 | `$manju-production-workflow 启动漫剧项目《重生后我不再忍了》，题材都市复仇，30集，每集60秒` |
+| `manju-workflow-dashboard` | 想把漫剧生产流程做成本地 HTML 网页看板，展示从剧本导入、分镜、出图、视频生成到成片验收的完整工作流时使用。 | `$manju-workflow-dashboard 给这个漫剧项目生成皮玺玉风格网页工作流看板` |
 
 ## 简单判断
 
@@ -41,6 +42,7 @@ C:\Users\Administrator\.codex\skills\screenplay-director\SKILL.md
 - 要把已有剧本按片段拆成镜号、时长、景别、运镜、画面内容提示词、人物台词和备注，用 `script-to-storyboard`。
 - 要根据剧本、世界观、角色设定和分镜生成绘图提示词，并为不同人物、场景选择 Midjourney、OpenAI Images、Gemini/Imagen、Runway、可灵、即梦、通义万相、混元或 SD/FLUX/ComfyUI，用 `storyboard-image-prompts`。
 - 要完整跑 PRD、SOP、剧本、分镜、提示词和质检，用 `manju-production-workflow`。
+- 要把漫剧生产流程做成本地网页看板、展示平台选择、确认点、验收和自检，用 `manju-workflow-dashboard`。
 
 ## 激活方式
 
