@@ -28,7 +28,7 @@ C:\Users\Administrator\.codex\skills\screenplay-director\SKILL.md
 |---|---|---|
 | `prd-writer-agent` | 想把产品想法、功能需求、MVP、改进建议、漫剧项目需求或 AI 开发工作流整理成 PRD 时使用。它会先做需求访谈和概念对齐，持续维护项目命名 PRD Markdown，完整版完成后生成皮玺玉风格 PRD 网页；用户说“设计生成工作流”时默认带入 Codex + Claude + Tuzi API；AI 开发项目会同步估算和记录成本、产出、ROI。 | `$prd-writer-agent 帮我把一个 AI 视频学习助手整理成 MVP PRD，并设计生成工作流` |
 | `screenplay-director` | 想把故事、小说片段或散乱文字整理成中文专业剧本时使用。它会先提炼剧情大纲，自动起标题，建立人物设定角色档案，并按【场景】【人物】【动作】【台词】【镜头提示】输出，保持男女主和反派出场描述一致，创建 Markdown 和 Word 文件。 | `$screenplay-director 把这段小说整理成专业剧本，要求每段包含场景、人物、动作、台词和镜头提示` |
-| `script-to-storyboard` | 想把剧本、小说片段、Word、PDF、Markdown 或网页内容拆成分镜头脚本，并输出可用于 AI 生图的镜头提示词时使用。 | `$script-to-storyboard 把这个剧本文件转成分镜表，输出 Markdown 和 Excel` |
+| `script-to-storyboard` | 想把剧本、小说片段、Word、PDF、Markdown 或网页内容拆成客观分镜头脚本，并输出可用于 AI 生图的 MD/Excel 分镜表时使用。 | `$script-to-storyboard 根据剧本文件和片段名称“妈妈病了”建立新的 MD 和 Excel 分镜脚本` |
 | `manju-production-workflow` | 想从 0 到 1 做完整漫剧生产流水线时使用。它会协调 PRD、SOP、角色档案、剧本、分镜、AI 生图提示词和质检。 | `$manju-production-workflow 启动漫剧项目《重生后我不再忍了》，题材都市复仇，30集，每集60秒` |
 
 ## 简单判断
@@ -37,7 +37,7 @@ C:\Users\Administrator\.codex\skills\screenplay-director\SKILL.md
 - 要把故事、小说或文字整理成专业剧本，并保存成 Markdown/Word，用 `screenplay-director`。
 - 要按专业格式输出【场景】【人物】【动作】【台词】【镜头提示】，用 `screenplay-director`。
 - 要稳定女主、男主、反派的人物设定、绘图固定提示词和禁止变化特征，也用 `screenplay-director`。
-- 要把已有剧本拆成分镜头、景别、画面描述和 AI 生图提示词，用 `script-to-storyboard`。
+- 要把已有剧本按片段拆成镜号、时长、景别、运镜、画面内容提示词、人物台词和备注，用 `script-to-storyboard`。
 - 要完整跑 PRD、SOP、剧本、分镜、提示词和质检，用 `manju-production-workflow`。
 
 ## 激活方式
@@ -71,7 +71,7 @@ $manju-production-workflow 启动漫剧项目《重生后我不再忍了》
 ## 外部 API 注意事项
 
 - `screenplay-director` 支持兔子 API 多模型流程，但只有用户明确要求调用 API 时才应该调用。
-- `script-to-storyboard` 支持通过兔子 API 先用 DeepSeek 写分镜初稿，再用 Claude 改对白、节奏和情绪。
+- `script-to-storyboard` 支持通过兔子 API 先用 DeepSeek 写分镜初稿，再用 Claude 以导演编剧视角审查画面合理性、时长合理性、对话覆盖和运镜可实现性。
 - `manju-production-workflow` 默认只协调本地文件和子 skill；只有用户明确要求外部模型或平台时才调用 API。
 - 调用外部 API 会消耗余额，也会把输入内容发送到第三方服务。
 - `prd-writer-agent` 默认工作环境是 Codex 实现、Claude 评审、Tuzi API 作为产品运行时模型网关；Tuzi 价格页 `https://api.tu-zi.com/pricing` 是默认核验入口。
