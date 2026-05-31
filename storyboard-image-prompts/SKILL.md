@@ -1,29 +1,33 @@
 ---
 name: storyboard-image-prompts
-description: Generate AI drawing/image prompts from screenplays, scripts, shot lists, storyboards, character bibles, or Chinese 漫剧/短剧分镜表. Use when Codex needs to convert scenes and shots into platform-ready prompts, keep character/style consistency, choose suitable image-generation platforms and models for different scenes or characters, or prepare batch prompt tables for Midjourney, OpenAI Images, Gemini/Imagen, Runway, Kling, Jimeng, Hunyuan, Tongyi Wanxiang, Stable Diffusion, FLUX, or similar tools.
+description: Generate AI drawing/image prompts from screenplays, scripts, shot lists, storyboards, worldbuilding documents, character bibles, or Chinese 漫剧/短剧分镜表. Use when Codex needs to convert scenes and shots into platform-ready prompts, derive visual prompts from worldview and character settings, keep character/style consistency, choose suitable image-generation platforms and models for different scenes or characters, or prepare batch prompt tables for Midjourney, OpenAI Images, Gemini/Imagen, Runway, Kling, Jimeng, Hunyuan, Tongyi Wanxiang, Stable Diffusion, FLUX, or similar tools.
 ---
 
 # Storyboard Image Prompts
 
 ## Goal
 
-Turn a script and storyboard into production-ready image prompts. Preserve the story, characters, scene continuity, camera language, and visual style while choosing a practical platform/model for each shot.
+Turn a script, worldview, character bible, and storyboard into production-ready image prompts. Preserve the story, world rules, character settings, scene continuity, camera language, and visual style while choosing a practical platform/model for each shot.
 
 ## Workflow
 
 1. Read the source material before writing prompts:
    - script or screenplay
    - storyboard table
-   - character bible, casting notes, LoRA notes, style references, or previous prompt sheets if provided
+   - worldbuilding/worldview notes, era rules, genre tone, social hierarchy, factions, magic/sci-fi rules, regional culture, or production art direction if provided
+   - character bible, relationship map, casting notes, LoRA notes, style references, or previous prompt sheets if provided
 2. Extract stable visual facts:
+   - worldview constraints: genre, era, technology level, power system, class/faction symbols, architecture, clothing rules, taboo colors/props, and overall visual tone
    - character identity, age, clothing, hairstyle, body traits, expression habits
+   - character setting logic: occupation/status, faction, personality, relationship role, trauma/desire, signature object, and how these should visibly affect clothing, posture, expression, or props
    - location, era, time of day, lighting, weather, props
    - shot size, camera angle, lens feel, motion if relevant
    - required continuity across adjacent shots
-3. Choose platform/model per shot using `references/platform-model-guide.md`.
-4. Write prompts in the platform's natural prompt style.
-5. Output a table or spreadsheet-ready Markdown with one row per shot.
-6. Add quality checks and risks when the prompt set depends on paid platforms, external accounts, uploaded references, face likeness, minors, brands, or copyrighted styles.
+3. Build a compact "visual bible" before the shot table when worldview or character settings are available.
+4. Choose platform/model per shot using `references/platform-model-guide.md`.
+5. Write prompts in the platform's natural prompt style.
+6. Output a table or spreadsheet-ready Markdown with one row per shot.
+7. Add quality checks and risks when the prompt set depends on paid platforms, external accounts, uploaded references, face likeness, minors, brands, or copyrighted styles.
 
 ## Prompt Rules
 
@@ -31,13 +35,29 @@ Prefer objective, visible details over plot explanation. Describe what the image
 
 Keep each shot prompt grounded in the source. Do not invent new characters, plot actions, props, or locations unless the user asks for creative expansion.
 
+Always resolve prompts through the worldview and character settings before writing the shot prompt:
+
+```text
+世界观约束 -> 场景美术规则 -> 角色设定锚点 -> 当前镜头动作/情绪 -> 平台化提示词
+```
+
+If the source includes a worldbuilding document, turn it into stable visual rules. For example, "赛博修仙" should become visible design constraints such as neon talismans, ritual hardware, sect insignia, mixed robe-and-tech clothing, and high-contrast city lighting. Do not leave worldview concepts as abstract words only.
+
+If character settings include personality, class, faction, wounds, or relationships, translate them into visible choices: posture, expression, costume wear, props, color accents, distance from other characters, and framing. Do not write hidden psychology unless it affects the visible image.
+
 Maintain consistency by repeating the same character anchor phrase across shots:
 
 ```text
 角色锚点 = Chinese name + age range + facial shape + hairstyle + signature clothing + one unique visible trait
 ```
 
-For recurring characters, produce a compact character anchor block before the shot table. If reference images or LoRA names are provided, include them in the platform-specific prompt field.
+For recurring characters, produce a compact character anchor block before the shot table. Include world/faction markers when they are visually important:
+
+```text
+角色锚点 = name + age range + face/hair/body + signature clothing + faction/status marker + unique visible trait
+```
+
+If reference images or LoRA names are provided, include them in the platform-specific prompt field.
 
 Write negative prompts only for platforms that support them or when the user requests Stable Diffusion/ComfyUI-style output.
 
@@ -69,15 +89,16 @@ If model/platform information could be outdated, say so and verify before recomm
 
 Default to this structure unless the user asks for another format:
 
-| 镜号 | 画面目的 | 推荐平台/模型 | 主提示词 | 角色锚点 | 场景/镜头 | 光影色彩 | 负面提示词 | 参数/备注 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 镜号 | 画面目的 | 世界观/角色依据 | 推荐平台/模型 | 主提示词 | 角色锚点 | 场景/镜头 | 光影色彩 | 负面提示词 | 参数/备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 
 For each row:
 
 - `画面目的`: one concise production note, not a plot summary.
+- `世界观/角色依据`: cite the concrete world rule or character setting that shapes the image, such as `玄门世家-青金法纹` or `女主落魄但倔强`.
 - `推荐平台/模型`: include the reason in 5-15 Chinese characters, such as `Midjourney current - 人物氛围强`.
 - `主提示词`: write in Chinese by default; add English if the selected platform performs better with English.
-- `角色锚点`: repeat stable identity details exactly.
+- `角色锚点`: repeat stable identity details exactly, including faction/status markers when needed.
 - `场景/镜头`: include shot size, angle, lens feeling, composition.
 - `光影色彩`: include time, light source, contrast, palette.
 - `负面提示词`: include only useful exclusions.
@@ -88,6 +109,8 @@ For each row:
 Before finalizing:
 
 - Verify every storyboard shot has a prompt.
+- Verify prompts reflect the provided worldview and character settings, not only the isolated shot action.
+- Verify abstract worldview terms have been converted into visible design elements.
 - Verify recurring characters keep the same anchor wording.
 - Verify platform/model recommendations match the shot's visual need.
 - Flag shots that need reference images, LoRA training, face consistency, or manual review.
