@@ -34,6 +34,7 @@ Default new dashboards to an interview demonstration layout:
 - Do not rely on a separate detailed node graph as the main explanation. Make the main flow modules clickable; clicking a module should expand that node's detailed workflow below the diagram.
 - For example, clicking `90秒横版预告分镜` should show: story import -> full script -> episode storyboard -> cost estimate -> choose teaser-first strategy -> regenerate teaser script/storyboard.
 - Include an explanation path for how to present the workflow in 3-5 minutes.
+- Include a numbered "story to finished film" section: story import -> PRD -> episode scripts -> episode storyboards -> cost estimate -> teaser-first rewrite -> character/prop bible -> stills -> shot grading -> paid fallback -> rough cut -> acceptance/export.
 - Show both "what I operate" and "how I verify it": platform confirmation, acceptance criteria, fail conditions, and返工入口.
 - Keep it local/offline so it can open during an interview without network risk.
 
