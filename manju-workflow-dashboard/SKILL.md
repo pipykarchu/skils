@@ -30,8 +30,8 @@ Use offline HTML/CSS by default. Do not depend on CDN, Mermaid, login services, 
 Default new dashboards to an interview demonstration layout:
 
 - Put project identity and production target in the first screen.
-- Put a simple "one-glance" main flow before any complex graph, for example: `90秒横版预告分镜 -> 24张横版静帧 -> 镜头分级 -> 可灵/即梦/Seedance/FFmpeg -> 粗剪合成 -> 横版 -> 竖版`.
-- Make the detailed workflow graph visually similar to ComfyUI: dark canvas, connected nodes, colored node groups, compact ports, and visible flow from input to export.
+- Put a large "one-glance" main flow before any complex graph, with Mermaid-like boxes/arrows, for example: `90秒横版预告分镜 -> 24张横版静帧 -> 镜头分级 -> 可灵/即梦/Seedance/FFmpeg -> 粗剪合成 -> 横版 -> 竖版`.
+- Keep the detailed ComfyUI-style graph collapsed by default; it is secondary material for deeper explanation, not the first thing the viewer must parse.
 - Include an explanation path for how to present the workflow in 3-5 minutes.
 - Show both "what I operate" and "how I verify it": platform confirmation, acceptance criteria, fail conditions, and返工入口.
 - Keep it local/offline so it can open during an interview without network risk.

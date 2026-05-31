@@ -319,6 +319,41 @@ def render_html(project: dict[str, object], title: str) -> str:
     .branch-card strong {{ display:block; font-size:15px; }}
     .branch-card span {{ display:block; margin-top:5px; color:var(--muted); font-size:12px; }}
     .merge-note {{ margin:12px 0; color:var(--gold); text-align:center; font-size:13px; font-weight:700; }}
+    .flowchart-panel {{
+      padding:18px; background:rgba(7,10,9,.5); border:1px solid rgba(132,199,167,.34);
+      border-radius:14px; overflow:auto; box-shadow:inset 0 0 0 1px rgba(255,255,255,.025), 0 16px 40px rgba(0,0,0,.28);
+    }}
+    .flowchart-svg {{ display:block; min-width:1180px; width:100%; height:auto; }}
+    .flow-box {{ fill:#17231f; stroke:rgba(132,199,167,.72); stroke-width:2; rx:12; }}
+    .flow-box.start {{ stroke:rgba(212,173,95,.85); fill:#211e14; }}
+    .flow-box.video {{ stroke:rgba(132,199,167,.82); fill:#14231d; }}
+    .flow-box.paid {{ stroke:rgba(210,123,103,.9); fill:#261815; }}
+    .flow-box.local {{ stroke:rgba(167,139,216,.88); fill:#1d1a28; }}
+    .flow-box.export {{ stroke:rgba(122,184,197,.9); fill:#142127; }}
+    .flow-diamond {{ fill:#2d2719; stroke:rgba(212,173,95,.92); stroke-width:2; }}
+    .flow-line {{
+      fill:none; stroke:rgba(212,173,95,.78); stroke-width:3; stroke-linecap:round;
+      stroke-linejoin:round; marker-end:url(#flowArrow);
+    }}
+    .flow-line.branch {{ stroke:rgba(132,199,167,.7); }}
+    .flow-line.fail {{ stroke:rgba(210,123,103,.78); }}
+    .flow-line.local {{ stroke:rgba(167,139,216,.78); }}
+    .flow-text {{ fill:var(--text); font-size:18px; font-weight:760; text-anchor:middle; dominant-baseline:middle; }}
+    .flow-small {{ fill:var(--muted); font-size:13px; text-anchor:middle; dominant-baseline:middle; }}
+    .flow-label {{ fill:#111611; font-size:13px; font-weight:800; text-anchor:middle; dominant-baseline:middle; }}
+    .label-pill {{ fill:var(--gold); rx:12; }}
+    details.detail-graph {{
+      margin-top:18px; border:1px solid var(--line); border-radius:12px;
+      background:rgba(7,10,9,.35); overflow:hidden;
+    }}
+    details.detail-graph > summary {{
+      cursor:pointer; padding:14px 16px; color:var(--gold); font-weight:780; list-style:none;
+    }}
+    details.detail-graph > summary::-webkit-details-marker {{ display:none; }}
+    details.detail-graph > summary::after {{
+      content:"展开"; float:right; color:var(--muted); font-size:12px; font-weight:400;
+    }}
+    details.detail-graph[open] > summary::after {{ content:"收起"; }}
     .board {{
       position:relative; height:548px; overflow:auto; border-radius:14px;
       border:1px solid rgba(132,199,167,.2);
@@ -415,62 +450,62 @@ def render_html(project: dict[str, object], title: str) -> str:
 
     <h2>01 · 一眼看懂的主流程</h2>
     <p class="caption">面试先讲这条主线：预告怎么从分镜变成静帧，再按镜头等级走不同平台，最后合成横版并裁竖版。</p>
-    <section class="simple-flow" aria-label="横版预告主流程">
-      <div class="flow-row">
-        <div class="flow-node" style="--accent: var(--gold)">
-          <strong>横版预告分镜</strong>
-          <span>确定镜头、字幕、音效、节奏钩子</span>
-        </div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-node" style="--accent: var(--cyan)">
-          <strong>横版静帧</strong>
-          <span>MJ / Image2 / 即梦出16:9主图</span>
-        </div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-node decision">
-          <strong>镜头分级</strong>
-          <span>S级、失败兜底、B/C级分流处理</span>
-        </div>
-      </div>
-      <div class="branch-row">
-        <div class="branch-card" style="--accent: var(--jade)">
-          <b>S级</b>
-          <strong>可灵 / 即梦图生视频</strong>
-          <span>优先用低成本平台测试核心动态镜头</span>
-        </div>
-        <div class="branch-card" style="--accent: var(--red)">
-          <b>失败兜底</b>
-          <strong>Seedance 2</strong>
-          <span>只补最值钱、低成本平台失败的镜头</span>
-        </div>
-        <div class="branch-card" style="--accent: var(--purple)">
-          <b>B/C级</b>
-          <strong>剪映 / FFmpeg静帧动效</strong>
-          <span>慢推、横移、切黑、字幕音效完成画面运动</span>
-        </div>
-      </div>
-      <div class="merge-note">三路素材统一进入粗剪合成</div>
-      <div class="flow-row">
-        <div class="flow-node" style="--accent: var(--gold)">
-          <strong>粗剪合成</strong>
-          <span>视频、静帧动效、字幕、旁白、音效合成</span>
-        </div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-node" style="--accent: var(--cyan)">
-          <strong>平台横版预告</strong>
-          <span>先完成16:9主母版</span>
-        </div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-node" style="--accent: var(--jade)">
-          <strong>裁竖版</strong>
-          <span>9:16安全区检查，不裁掉人脸和关键道具</span>
-        </div>
-      </div>
+    <section class="flowchart-panel" aria-label="横版预告主流程图">
+      <svg class="flowchart-svg" viewBox="0 0 1320 560" role="img" aria-label="横版预告到横竖版发布流程">
+        <defs>
+          <marker id="flowArrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+            <path d="M0,0 L10,5 L0,10 Z" fill="rgba(212,173,95,.9)"></path>
+          </marker>
+        </defs>
+        <rect class="flow-box start" x="20" y="220" width="150" height="82"></rect>
+        <text class="flow-text" x="95" y="250">横版</text>
+        <text class="flow-text" x="95" y="276">预告分镜</text>
+        <path class="flow-line" d="M170 261 H235"></path>
+        <rect class="flow-box" x="245" y="220" width="150" height="82"></rect>
+        <text class="flow-text" x="320" y="250">横版</text>
+        <text class="flow-text" x="320" y="276">静帧</text>
+        <path class="flow-line" d="M395 261 H465"></path>
+        <polygon class="flow-diamond" points="545,194 625,261 545,328 465,261"></polygon>
+        <text class="flow-text" x="545" y="250">镜头</text>
+        <text class="flow-text" x="545" y="276">分级</text>
+        <path class="flow-line branch" d="M625 261 C675 261 670 92 730 92"></path>
+        <rect class="label-pill" x="645" y="116" width="44" height="24"></rect>
+        <text class="flow-label" x="667" y="128">S级</text>
+        <rect class="flow-box video" x="730" y="52" width="170" height="82"></rect>
+        <text class="flow-text" x="815" y="82">可灵 / 即梦</text>
+        <text class="flow-text" x="815" y="108">图生视频</text>
+        <path class="flow-line fail" d="M625 261 H730"></path>
+        <rect class="label-pill" x="648" y="232" width="72" height="24"></rect>
+        <text class="flow-label" x="684" y="244">失败兜底</text>
+        <rect class="flow-box paid" x="730" y="220" width="170" height="82"></rect>
+        <text class="flow-text" x="815" y="261">Seedance 2</text>
+        <path class="flow-line local" d="M625 261 C675 261 670 430 730 430"></path>
+        <rect class="label-pill" x="642" y="384" width="54" height="24"></rect>
+        <text class="flow-label" x="669" y="396">B/C级</text>
+        <rect class="flow-box local" x="730" y="390" width="170" height="82"></rect>
+        <text class="flow-text" x="815" y="420">剪映 / FFmpeg</text>
+        <text class="flow-text" x="815" y="446">静帧动效</text>
+        <path class="flow-line branch" d="M900 93 C960 93 950 261 1000 261"></path>
+        <path class="flow-line fail" d="M900 261 H1000"></path>
+        <path class="flow-line local" d="M900 431 C960 431 950 261 1000 261"></path>
+        <rect class="flow-box start" x="1000" y="220" width="130" height="82"></rect>
+        <text class="flow-text" x="1065" y="250">粗剪</text>
+        <text class="flow-text" x="1065" y="276">合成</text>
+        <path class="flow-line" d="M1130 261 C1148 261 1148 211 1160 211"></path>
+        <rect class="flow-box export" x="1160" y="170" width="140" height="82"></rect>
+        <text class="flow-text" x="1230" y="200">横版预告</text>
+        <text class="flow-text" x="1230" y="226">发布</text>
+        <path class="flow-line" d="M1230 252 V320"></path>
+        <rect class="flow-box export" x="1160" y="320" width="140" height="82"></rect>
+        <text class="flow-text" x="1230" y="350">裁竖版</text>
+        <text class="flow-text" x="1230" y="376">发布</text>
+      </svg>
     </section>
 
-    <h2>02 · 详细节点脑图</h2>
-    <p class="caption">下面这张图用于展开细讲：每个节点有输入、工具、输出、确认点，呈现方式接近 ComfyUI 的生产节点。</p>
-    <section class="board" aria-label="ComfyUI式工作流节点脑图">
+    <details class="detail-graph">
+      <summary>02 · 详细节点脑图</summary>
+      <p class="caption" style="padding: 0 16px;">这部分用于展开细讲：每个节点有输入、工具、输出、确认点，呈现方式接近 ComfyUI 的生产节点。</p>
+      <section class="board" aria-label="ComfyUI式工作流节点脑图">
       <div class="canvas">
         <svg class="links" viewBox="0 0 2070 525" preserveAspectRatio="none">
           <defs>
@@ -482,7 +517,8 @@ def render_html(project: dict[str, object], title: str) -> str:
         </svg>
         {render_nodes()}
       </div>
-    </section>
+      </section>
+    </details>
 
     <h2>03 · 面试讲解路径</h2>
     <section class="steps">{render_demo_steps()}</section>
