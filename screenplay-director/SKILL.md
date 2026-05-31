@@ -1,6 +1,6 @@
 ---
 name: screenplay-director
-description: Turn a story, novel excerpt, raw text, outline, synopsis, character idea, or rough plot into a professional Chinese screenplay, first extract a plot outline, infer a fitting Chinese title, build stable character profile files/descriptions for consistency, and create both Markdown and Word (.docx) files. Use when the user wants to write a script, convert a novel/text into a screenplay, generate a screenplay, split a story into scenes or segments under 400 Chinese characters each, polish character dialogue, save the result as MD/Word, or run a Tuzi API multi-model workflow where DeepSeek drafts, Claude/GPT improves characters and dialogue, and Gemini checks long-form consistency.
+description: Turn a story, novel excerpt, raw text, outline, synopsis, character idea, or rough plot into a professional Chinese screenplay, first extract a plot outline, infer a fitting Chinese title, build stable character profile files/descriptions for consistency, write every segment with professional scene/person/action/dialogue/camera fields, and create both Markdown and Word (.docx) files. Use when the user wants to write a script, convert a novel/text into a screenplay, generate a screenplay, split a story into scenes or segments under 400 Chinese characters each, polish character dialogue, save the result as MD/Word, or run a Tuzi API multi-model workflow where DeepSeek drafts, Claude/GPT improves characters and dialogue, and Gemini checks long-form consistency.
 ---
 
 # Screenplay Director
@@ -12,8 +12,10 @@ Convert the user's story into a logical, professional, shootable Chinese screenp
 - 默认用中文输出剧本、人物设定、对白、审校意见和修改建议。
 - 先用大白话说明本次写作目的，再输出具体剧本内容。
 - 输出 Markdown.
-- 每个正式剧本片段不超过 400 个中文字符；如果内容过长，拆成更多片段。
+- 每个正式剧本片段的核心剧情内容不超过 400 个中文字符；如果内容过长，拆成更多片段。场景、人物、镜头等结构化字段可以独立列出，但仍要简洁。
 - 每个片段必须有明确戏剧功能：铺垫、冲突、转折、情绪推进、信息揭示、高潮或收束。
+- 每个正式剧本片段必须包含专业字段：【场景】【人物】【动作】【台词】【镜头提示】；缺一项都不算完整剧本。
+- 片段书写顺序必须清楚：先交代事件发生的地点和时间，再交代出场人物，再写可见动作，再写台词/内心/独白，最后写镜头运动效果。
 - 保持人物动机一致，避免角色为了剧情强行行动。
 - 对白要符合人物身份、关系、情绪和场景压力。
 - 优先写可见动作、可拍摄画面和可表演对白，少用解释性旁白。
@@ -24,6 +26,31 @@ Convert the user's story into a logical, professional, shootable Chinese screenp
 - 必须建立“人物设定角色档案”，并在后续片段中保持角色外貌、发型、服装、性格、口头禅、情绪表达和绘图固定提示词一致。
 - 默认创建两份文件：`.md` 和 `.docx`。
 - 创建文件前说明风险：会在本地写入新文件；文件名会根据标题生成；为避免覆盖已有文件，默认加时间戳。
+
+## Professional Script Format
+
+Write every screenplay segment in this professional order:
+
+```md
+## 片段 01：标题
+
+【场景】地点，天气/环境，时间
+【人物】人物 A（年龄，发型，服装，固定识别特征）；人物 B（年龄，发型，服装，固定识别特征）
+【动作】人物在画面里能被看见的动作；冲突如何发生、升级或转折。
+【台词】人物 A：（语气/状态）对白。
+人物 B：（语气/状态）对白。
+【镜头提示】景别、镜头运动、画面焦点、转场或运动效果。
+```
+
+Field rules:
+
+- 【场景】必须包含地点、时间和环境状态，例如天气、光线、人群、声音、空间关系。
+- 【人物】必须区分主角/配角，并沿用人物设定角色档案里的固定描述。
+- 【动作】只写画面能表现出来的动作，不用抽象解释代替表演。
+- 【台词】可以包含对话、内心、独白；必须标注语气或动作状态，避免所有角色说话同一种口吻。
+- 【镜头提示】必须包含至少一种具体镜头信息：远景/全景/中景/近景/特写、推拉摇移跟、俯拍/仰拍、焦点变化、转场、画面运动效果。
+- 镜头逻辑要顺畅：建立场景 -> 人物入画 -> 动作冲突 -> 台词反应 -> 情绪落点或钩子。
+- 不要把“镜头提示”写成泛泛的“画面很好看”；必须能指导拍摄、分镜或 AI 视频生成。
 
 ## Start Conditions
 
@@ -142,12 +169,14 @@ For each segment, include:
 - 片段标题
 - 场景地点
 - 时间
+- 天气/环境
 - 出场人物
 - 戏剧功能
 - 本段目标
 - 本段冲突
 - 本段结尾钩子
 - 出场人物固定描述
+- 镜头设计
 
 ### 6. Screenplay
 
@@ -156,26 +185,19 @@ Use this format for every segment:
 ```md
 ## 片段 01：标题
 
-**场景**：地点 / 时间
-**人物**：人物 A、人物 B
 **戏剧功能**：本段承担的剧情作用
-**出场人物固定描述**：沿用角色档案中的外貌、发型、服装、气质和绘图固定提示词
+**本段目标**：角色在本段想完成什么
+**本段冲突**：阻碍来自谁或什么
 
-【画面】
-描述可拍摄的视觉动作、环境、人物状态。
+【场景】地点，天气/环境，时间
+【人物】人物 A（年龄，发型，服装，固定识别特征）；人物 B（年龄，发型，服装，固定识别特征）
+【动作】人物在画面里能被看见的动作；冲突如何发生、升级或转折。
+【台词】人物 A：（语气/状态）对白。
+人物 B：（语气/状态）对白。
+【镜头提示】景别、镜头运动、画面焦点、转场或运动效果。
 
-【行动】
-人物做了什么，冲突如何发生或升级。
-
-【对白】
-人物 A：对白。
-人物 B：对白。
-
-【情绪推进】
-说明本段人物关系或心理发生了什么变化。
-
-【结尾钩子】
-用一个动作、台词、发现或反转结束本段。
+**情绪推进**：说明本段人物关系或心理发生了什么变化。
+**结尾钩子**：用一个动作、台词、发现或反转结束本段。
 ```
 
 ### 7. Quality Check
@@ -183,6 +205,8 @@ Use this format for every segment:
 Before finalizing, verify:
 
 - 是否已经在开头完成剧情大纲提炼。
+- 每个正式剧本片段是否都包含【场景】【人物】【动作】【台词】【镜头提示】。
+- 【镜头提示】是否具体写出景别、镜头运动、画面焦点或转场。
 - 每个片段是否不超过 400 个中文字符。
 - 每个片段是否有明确戏剧功能。
 - 主角目标是否清楚。

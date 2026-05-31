@@ -1,4 +1,4 @@
 interface:
   display_name: "剧本导演"
-  short_description: "将故事/小说提炼大纲，生成带角色档案的中文剧本并输出MD/Word。"
-  default_prompt: "Use $screenplay-director to extract my story outline, build stable character profiles, write a Chinese screenplay, and save it as Markdown and Word files."
+  short_description: "将故事/小说生成含场景人物动作台词镜头的专业中文剧本。"
+  default_prompt: "Use $screenplay-director to extract my story outline, build stable character profiles, write a professional Chinese screenplay with scene, character, action, dialogue, and camera fields, and save it as Markdown and Word files."
