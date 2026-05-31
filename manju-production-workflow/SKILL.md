@@ -1,6 +1,6 @@
 ---
 name: manju-production-workflow
-description: Use when the user wants to run an end-to-end AI 漫剧 production workflow, coordinate PRD, SOP, character bible, screenplay, storyboard, AI image prompts, LoRA consistency notes, episode folder management, batch exports, and quality checks by invoking prd-writer-agent, screenplay-director, and script-to-storyboard in order.
+description: Use when the user wants to run an end-to-end AI 漫剧 production workflow, coordinate PRD, SOP, character bible, screenplay, storyboard scripts, AI image prompts, LoRA consistency notes, episode folder management, batch exports, and quality checks by invoking prd-writer-agent, screenplay-director, script-to-storyboard, and storyboard-image-prompts in order.
 ---
 
 # 漫剧生产工作流总控
@@ -13,7 +13,8 @@ description: Use when the user wants to run an end-to-end AI 漫剧 production w
 
 - 用 `prd-writer-agent` 定义项目方向和验收标准。
 - 用 `screenplay-director` 写故事、人物、剧本和 Word/Markdown 文件。
-- 用 `script-to-storyboard` 拆分镜、生成 Excel/Markdown 分镜表和 AI 生图提示词。
+- 用 `script-to-storyboard` 拆分镜，生成 Excel/Markdown 分镜脚本，统一放入 `06_分镜表`。
+- 用 `storyboard-image-prompts` 根据剧本、角色设定和分镜脚本生成 AI 生图提示词，统一放入 `07_绘图提示词`，并确保全篇角色、画风、镜头语言一致。
 
 ## 默认规则
 
@@ -24,6 +25,32 @@ description: Use when the user wants to run an end-to-end AI 漫剧 production w
 - 保护原创内容：提醒用户剧本、人设、角色图、LoRA 训练图上传外部平台有泄露风险。
 - 已有项目文件优先复用，不覆盖用户原稿；需要改动时追加版本或时间戳。
 - 每次只推进一个明确阶段，阶段完成后给出下一步建议和成功标志。
+
+## 引擎分工（Codex × Claude 协作）
+
+本工作流由 Codex 作为入口和总控。Codex 已通过 MCP 接入本机 Claude（server 名 `claude`，可调用 `Read`/`Write`/`Bash`/`WebSearch`/`Agent` 等工具），因此可按任务特性把环节路由给更合适的引擎。
+
+### 分工原则（平衡型）
+
+- **Codex 主控**：项目目录创建、`项目状态.md` 维护、阶段调度、所有文件落盘、机械性格式化。
+- **Claude 主跑**：中文剧本创作、人物口吻、戏剧结构（阶段3）；跨集一致性与批判性质检（阶段6）。
+- **协作（Codex 起草 / Claude 把关或定调）**：PRD 评审（阶段1）、分镜导演视角审查（阶段4）、生图提示词的风格与角色一致性（阶段5）。
+- **其余**（阶段2 SOP 等流程文档）：Codex 主控。
+
+每个阶段标题下用 `执行引擎：` 注明当前引擎归属。
+
+### 落盘铁律（必须遵守）
+
+1. **Claude 只生成内容并返回文本，不直接写项目文件**。所有文件由 Codex 统一写入指定路径。
+   - 原因：实测中 Claude 经 MCP 写文件会落到错误目录（如 `个人IP`），且不严格遵循绝对路径。
+2. **写入后必须由 Codex 验证**：确认目标路径下文件真实存在、内容非空、与预期一致，再宣布该阶段完成。
+   - 原因：弱模型在工具调用失败时可能谎报“已写入”。**判断成败以磁盘实际产物为准，不轻信文字回复。**
+3. 调用 Claude 前，在指令里**明确传入目标绝对路径和已有上下文文件路径**；Claude 返回内容后，Codex 负责落到该路径。
+
+### 成本提醒
+
+每次“路由给 Claude”= Codex（中转 gpt-5.5）思考 + Claude 执行，双份额度消耗。
+因此只在创作/审查类环节借 Claude，机械活留 Codex；不无脑全量路由。
 
 ## 快速入口
 
@@ -72,6 +99,8 @@ description: Use when the user wants to run an end-to-end AI 漫剧 production w
 
 ### 阶段 1：项目定义
 
+执行引擎：Codex 起草结构 + Claude 评审。
+
 调用 `prd-writer-agent`。
 
 目的：定义“这部漫剧要做成什么样”，不是写软件功能。
@@ -103,6 +132,8 @@ description: Use when the user wants to run an end-to-end AI 漫剧 production w
 - 用户确认方向后再进入剧本阶段。
 
 ### 阶段 2：生产 SOP
+
+执行引擎：Codex 主控。
 
 本 skill 直接生成或维护 SOP。
 
@@ -139,6 +170,8 @@ SOP 必须包含：
 - 新人或外包能照着做。
 
 ### 阶段 3：角色与剧本
+
+执行引擎：Claude 主跑（剧本创作、人物口吻、戏剧结构），Codex 落盘。
 
 调用 `screenplay-director`。
 
@@ -178,9 +211,11 @@ SOP 必须包含：
 
 ### 阶段 4：剧本转分镜
 
+执行引擎：Codex 生成分镜表 + Claude 导演视角审查（画面/时长/运镜合理性），Codex 落盘。
+
 调用 `script-to-storyboard`。
 
-目的：把剧本拆成镜头级分镜表，并生成 AI 生图提示词。
+目的：把剧本拆成镜头级分镜脚本。这个阶段只负责分镜，不单独整理最终生图提示词包。
 
 输入优先级：
 
@@ -193,7 +228,6 @@ SOP 必须包含：
 ```text
 <项目名>/06_分镜表/第XX集_分镜脚本.md
 <项目名>/06_分镜表/第XX集_分镜脚本.xlsx
-<项目名>/07_绘图提示词/第XX集_生图提示词.md
 ```
 
 每个镜头至少包含：
@@ -208,19 +242,53 @@ SOP 必须包含：
 - 运镜
 - 对白
 - 音效
-- AI 生图提示词
-- 负面提示词
+- 画面内容提示词
 - 备注
 
 成功标志：
 
-- 每个镜头可以直接拿去生成图。
-- 提示词不把对白、心理活动、抽象情绪硬塞进画面。
+- 每个镜头都能看出画面主体、动作、场景、景别和运镜。
+- 画面内容提示词不把对白、心理活动、抽象情绪硬塞进画面。
 - 角色外貌、发型、服装、关键识别点稳定。
 
 ### 阶段 5：生图准备
 
-本 skill 负责把分镜表整理成绘图平台可用提示词包。
+执行引擎：Claude 定风格与角色一致性 + Codex 按平台格式化，Codex 落盘。
+
+调用 `storyboard-image-prompts`。
+
+目的：根据剧本、角色设定和 `06_分镜表` 里的分镜脚本，整理成绘图平台可用提示词包，并保证全篇风格一致。
+
+输入优先级：
+
+1. `05_剧本/第XX集_<标题>.md`
+2. `06_分镜表/第XX集_分镜脚本.md` 或 `.xlsx`
+3. `03_角色设定/角色档案.md`
+4. `03_角色设定/角色固定提示词.md`
+5. 已有 `07_绘图提示词/` 中的前集提示词、风格锚点或 LoRA 备注
+
+输出到：
+
+```text
+<项目名>/07_绘图提示词/第XX集_生图提示词.md
+```
+
+提示词包必须包含：
+
+- 全篇统一风格锚点
+- 角色固定锚点
+- 场景和光影规则
+- 每个镜头的主提示词
+- 负面提示词
+- 平台/模型建议
+- 画幅、seed、参考图或 LoRA 备注
+
+风格一致性要求：
+
+- 同一角色的年龄、脸型、发型、服装、标志物和气质描述保持一致。
+- 同一项目的画风、线条、上色、光影、构图语言保持一致。
+- 后续集优先沿用前集 `07_绘图提示词` 中的风格锚点，不重新发明画风。
+- 如果剧本要求角色换装或场景变化，必须在备注中说明剧情依据，不能静默改变识别特征。
 
 按目标平台整理：
 
@@ -237,7 +305,15 @@ SOP 必须包含：
 - 没有混入不可见心理描写。
 - 有画面质量词：清晰构图、主体明确、电影感灯光、细节完整、无文字水印、横版 16:9。
 
+成功标志：
+
+- `07_绘图提示词` 中每个分镜都有对应提示词。
+- 角色锚点和风格锚点在全篇重复一致。
+- 提示词可以交给目标绘图平台批量使用。
+
 ### 阶段 6：质检
+
+执行引擎：Claude 主跑（跨集一致性、批判性审查），Codex 落盘。
 
 输出到：
 
@@ -287,8 +363,19 @@ $manju-production-workflow 检查第1集剧本、分镜和生图提示词是否�
 
 - 交给 `prd-writer-agent` 前，提供项目名、题材、目标观众、集数、每集时长、画风、输出格式和成功标准。
 - 交给 `screenplay-director` 前，提供 PRD、角色方向、剧情梗概、目标集数和单集时长。
-- 交给 `script-to-storyboard` 前，提供剧本文件路径、片段名称、角色档案路径和输出目录。
+- 交给 `script-to-storyboard` 前，提供剧本文件路径、片段名称、角色档案路径和 `06_分镜表` 输出目录。
+- 交给 `storyboard-image-prompts` 前，提供剧本文件路径、分镜脚本路径、角色档案路径、角色固定提示词路径、前集提示词路径和 `07_绘图提示词` 输出目录。
 - 子 skill 生成文件后，更新 `项目状态.md`。
+
+## 路由给 Claude 的交接规则
+
+当某阶段执行引擎含 Claude 时：
+
+- 调用前，向 Claude 传入：本阶段目的、目标**绝对路径**、需读取的上下文文件**绝对路径**（剧本/角色档案/前集提示词等）、输出格式要求。
+- 要求 Claude **只返回生成内容（纯文本/Markdown），不要自行写文件**。
+- Claude 返回后，由 Codex 写入目标绝对路径，并**验证**：文件存在、内容非空、与返回内容一致。
+- 验证不通过时，不得宣布阶段完成；重试或改回 Codex 自行生成。
+- 协作类阶段（1/4/5）：Codex 先产出初稿，再请 Claude 评审/把关，按反馈修订后落盘。
 
 ## 结束输出
 

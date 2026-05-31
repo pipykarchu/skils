@@ -7,40 +7,47 @@ Recommended project output:
 ```text
 08_生成图片/
   定妆造/
-    manifest.json
-    selection-state.json
+    build_manifest.py     # 读角色档案+世界观，生成 manifest.json
+    manifest.json         # 驱动网页的数据
+    casting_gallery_server.py  # 从 skill 拷入
+    start.bat             # 智能启动（依赖检查/端口冲突/自动开浏览器）
+    selection-state.json  # 网页保存的评审状态
     prompts/
-      <角色>_<场景>_MJ.md
-      <角色>_<场景>_Image2.md
+      <角色>_<时期>_MJ_round01.md
+      <角色>_<时期>_Image2_round01.md
     candidates/
-      <角色>/<场景>/mj/round-01/*.png
-      <角色>/<场景>/image2/round-01/*.png
+      <角色>/<时期>/image2/round-01/*.png
+      <角色>/<时期>/mj/round-01/*.png
     final/
-      <角色>/<场景>/turnaround.png
+      <角色>/<时期>/turnaround.png
     overview/
       定妆造_总览.png
 ```
 
+`build_manifest.py` 的 `attach_existing_images` 会扫描 `candidates/<角色>/<时期>/<engine>/round-*/` 自动把已生成图片回填进 manifest；历史目录名与时期名不一致时，用 `state(..., image_dir="旧目录名")` 做别名。
+
 ## Candidate Manifest
 
-Use this JSON shape for gallery state:
+Use this JSON shape (see SKILL.md → Manifest Schema for the full field list):
 
 ```json
 {
   "project": "娃娃仙",
   "round": 1,
-  "roles": [
+  "styleTone": "整体基调默认值",
+  "modules": [
     {
-      "name": "娃娃仙姐姐",
-      "states": [
+      "name": "守护灵体与道具",
+      "roles": [
         {
-          "name": "五辫阶段",
-          "groups": [
+          "name": "娃娃仙姐姐",
+          "states": [
             {
-              "engine": "image2",
-              "promptFile": "prompts/娃娃仙姐姐_五辫阶段_Image2.md",
-              "images": [
-                {"id": "wawa-01", "path": "candidates/娃娃仙姐姐/五辫阶段/image2/round-01/01.png"}
+              "name": "显灵救人期",
+              "worldview": {"era": "童年段 · 1990年前后", "scene": "...", "keywords": ["多条麻花辫"]},
+              "groups": [
+                {"engine": "Image2", "images": [{"id": "wawaxian-显灵救人期-i2-01", "path": "candidates/娃娃仙姐姐/五辫阶段/image2/round-01/01.png"}]},
+                {"engine": "MJ", "images": []}
               ]
             }
           ]
@@ -50,6 +57,28 @@ Use this JSON shape for gallery state:
   ]
 }
 ```
+
+## Selection State (saved by the gallery)
+
+`POST /api/save` writes `selection-state.json`:
+
+```json
+{
+  "project": "娃娃仙",
+  "likes": {"<image-id>": true},
+  "finals": {"<角色>::<时期>": true},
+  "notes": {"<角色>::<时期>": {"likes": "...", "adjustments": "...", "nextRound": true}},
+  "overviewRequested": true,
+  "confirmedCount": 18, "totalStates": 18,
+  "confirmedLooks": [
+    {"module": "守护灵体与道具", "role": "娃娃仙姐姐", "state": "显灵救人期",
+     "era": "童年段 · 1990年前后", "styleTone": "...",
+     "refs": [{"engine": "Image2", "id": "...", "path": "candidates/.../02.png"}]}
+  ]
+}
+```
+
+`confirmedLooks` is the agent's hand-off for turnaround + overview generation: each confirmed period plus its liked reference images. Only act on `生成总览图` when `overviewRequested` is true and `confirmedCount === totalStates`.
 
 ## Round Logic
 

@@ -31,7 +31,7 @@ C:\Users\Administrator\.codex\skills\screenplay-director\SKILL.md
 | `script-to-storyboard` | 想把剧本、小说片段、Word、PDF、Markdown 或网页内容拆成客观分镜头脚本，并输出可用于 AI 生图的 MD/Excel 分镜表时使用。 | `$script-to-storyboard 根据剧本文件和片段名称“妈妈病了”建立新的 MD 和 Excel 分镜脚本` |
 | `storyboard-image-prompts` | 想根据剧本、世界观、分镜表、角色档案或漫剧短剧分镜生成 AI 绘图提示词，并按人物、场景、世界观规则、连续性和生产平台选择合适模型时使用。 | `$storyboard-image-prompts 根据这份剧本、世界观和分镜表生成绘图提示词，并推荐每镜使用的平台和模型` |
 | `dingzhuangzao` | 想做漫剧角色定妆、角色正面肖像候选、MJ/Image2 两版提示词、网页多选标心、确认造型后三视图高清导出和总览拼图时使用。它会先读取世界观、年代设定、场景和角色资料，服装造型必须贴合项目设定。 | `$dingzhuangzao 读取这个漫剧项目的世界观和角色设定，先给每个角色生成四张正面定妆候选并做网页选择器` |
-| `manju-production-workflow` | 想从 0 到 1 做完整漫剧生产流水线时使用。它会协调 PRD、SOP、角色档案、剧本、分镜、AI 生图提示词和质检。 | `$manju-production-workflow 启动漫剧项目《重生后我不再忍了》，题材都市复仇，30集，每集60秒` |
+| `manju-production-workflow` | 想从 0 到 1 做完整漫剧生产流水线时使用。它会协调 PRD、SOP、角色档案、剧本、分镜、AI 生图提示词和质检；支持 Codex×Claude 按阶段分工（剧本/质检等创作审查类路由给 Claude，机械活留 Codex，Claude 生成内容、Codex 统一落盘）。 | `$manju-production-workflow 启动漫剧项目《重生后我不再忍了》，题材都市复仇，30集，每集60秒` |
 | `manju-workflow-dashboard` | 想把漫剧生产流程做成面试演示用本地 HTML 网页看板，展示项目信息、ComfyUI式节点脑图、平台选择、操作步骤、成片验收和自检时使用。 | `$manju-workflow-dashboard 给这个漫剧项目生成皮玺玉风格 ComfyUI 节点工作流看板` |
 
 ## 简单判断

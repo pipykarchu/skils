@@ -60,14 +60,13 @@ Do not rely only on the style name. Always include concrete visual features from
    - Never save API keys into the project. Read keys from environment variables such as `TUZI_API_KEY`.
 
 4. **Build the web selection page**
-   - Use a local webpage with role blocks.
-   - Under each role, split by scene/state.
-   - Show MJ and Image2 candidate groups separately, each with four front portrait images.
-   - Allow favorite marking, multi-select, notes for "心仪的点", and an adjustment prompt field.
-   - Provide buttons:
-     - `进入下一版`: generate another candidate round from favorites + notes.
-     - `确认造型`: mark final reference for turnaround generation.
-     - `保存选择`: write JSON state to the project.
+   - Use a local three-pane webpage driven by a manifest JSON (`scripts/casting_gallery_server.py`).
+   - **Left pane**: roles grouped into modules (e.g. 主线/守护灵体与道具/家族长辈/鬼怪反派/现实层旁听). Each role is collapsible and expands to that role's time periods (states). A dot on the role marks "has a confirmed look"; a ✓ on a period marks it confirmed.
+   - **Center pane**: the selected role+period. Two fixed rows — Image2 on top, MJ below — each holding four front portrait candidates. The current period's overall tone shows in a top-right `整体基调风格` card. Below the rows: `心仪的点` and `调整提示词` fields, plus `进入下一版` and `确认此时期造型` buttons.
+   - **Right pane**: the worldview/scene background for that period (era, scene, space, props, costume, light, forbidden items, keyword tags) — read from `state.worldview`.
+   - **Heart vs confirm are separate**: clicking an image (or its top-right ❤️) toggles a 心仪 like (multi-select). `确认此时期造型` marks the whole period final; in a confirmed period the liked images become its final reference images. Confirming with zero hearts warns the user.
+   - **Bottom bar**: `生成总览图` stays disabled until every period is confirmed. It does **not** draw anything — it records the intent (`overviewRequested:true`) plus `confirmedLooks` into the saved JSON, so the agent generates the overview in the next step.
+   - `保存选择`: write `selection-state.json` (likes, finals, notes, confirmedLooks, overviewRequested) to the project.
 
 5. **Generate final turnarounds**
    - Only after user confirms a look.
@@ -78,22 +77,73 @@ Do not rely only on the style name. Always include concrete visual features from
 6. **Export production assets**
    - Save high-resolution images under a project folder such as `08_生成图片/定妆造/<角色>/<场景>/`.
    - Save JSON selection state and prompt history.
-   - Build an overview sheet after all roles/states are confirmed.
+   - Build an overview sheet only after all roles/states are confirmed and the user clicked `生成总览图` (read `confirmedLooks` from the saved JSON for the reference set).
    - Report paths, selected roles, and any failed/needs-regeneration items.
 
 ## Web Gallery
 
-Prefer creating a local static HTML plus a tiny localhost save server. Use `scripts/casting_gallery_server.py` as a reusable starting point when helpful. Copy or adapt it into the project rather than editing the skill copy directly.
+Prefer creating a local manifest-driven HTML plus a tiny localhost server. Use `scripts/casting_gallery_server.py` as the reusable starting point. Copy it into the project output folder (`08_生成图片/定妆造/`) rather than editing the skill copy directly, and generate the project `manifest.json` alongside it (a `build_manifest.py` that reads the character archive + worldview file is the cleanest way — see the 娃娃仙 instance).
+
+The server is intentionally backend-light and **never calls any image API**: it serves the page, serves `manifest.json` via `/api/manifest` (re-read from disk each request, so editing the manifest hot-reloads), serves images via `/asset/<relpath>` (path-traversal guarded), and persists the review state via `POST /api/save`. All generation happens in the agent step, not the browser.
 
 The gallery must support:
 
-- Role section -> scene/state subsection -> MJ/Image2 candidate group
-- Four portrait candidates per group in early rounds
-- Favorite/star selection
-- Notes field for preferred traits
-- Adjustment prompt field
-- Confirmed final look state
-- Saved JSON that Codex can read in the next step
+- Module → role (collapsible) → period(state) left navigation
+- Center: Image2 row over MJ row, four candidates each in early rounds, top-right tone card
+- Right: per-period worldview/scene panel
+- ❤️ like (multi-select) distinct from `确认此时期造型`
+- Notes (`心仪的点`) and adjustment-prompt fields
+- `进入下一版` / `确认此时期造型` / `生成总览图`(intent only) / `保存选择`
+- Saved JSON (`selection-state.json`) with `confirmedLooks` the agent can read next
+
+## Manifest Schema
+
+`manifest.json` drives the whole page:
+
+```json
+{
+  "project": "娃娃仙",
+  "round": 1,
+  "styleTone": "整体基调默认值（皮玺玉风格转译…）",
+  "modules": [
+    {
+      "name": "守护灵体与道具",
+      "roles": [
+        {
+          "name": "娃娃仙姐姐",
+          "age": "外形十五六岁",
+          "states": [
+            {
+              "name": "显灵救人期",
+              "age": "外形十五六岁",
+              "styleTone": "可选，覆盖该时期的整体基调，留空则回退到 role/manifest",
+              "worldview": {
+                "era": "童年段 · 1990年前后",
+                "scene": "右栏正文说明",
+                "space": "...", "props": "...", "costume": "...",
+                "light": "...", "forbid": "...",
+                "keywords": ["多条麻花辫", "灰花袄"]
+              },
+              "groups": [
+                {"engine": "Image2", "label": "...", "images": [
+                  {"id": "wawaxian-显灵救人期-i2-01", "path": "candidates/.../01.png", "note": ""}
+                ]},
+                {"engine": "MJ", "label": "...", "images": [ ... ]}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+- `styleTone` resolves period → role → manifest (first non-empty wins).
+- `image.path` empty → renders a placeholder slot (before generation). Backfill the path after images exist.
+- Group order is normalized to Image2-then-MJ regardless of authoring order; a missing engine renders an empty row.
+- `modules` is optional; a flat `roles` array at the top level also works.
+
 
 ## Prompt Rules
 
