@@ -285,6 +285,40 @@ def render_html(project: dict[str, object], title: str) -> str:
     .metric span {{ display:block; color:var(--muted); font-size:12px; margin-top:7px; }}
     h2 {{ margin:28px 0 12px; font-size:21px; letter-spacing:0; }}
     .caption {{ margin:0 0 14px; color:var(--muted); font-size:13px; }}
+    .simple-flow {{
+      padding:18px; border:1px solid rgba(132,199,167,.34); border-radius:14px;
+      background:rgba(7,10,9,.46); box-shadow:inset 0 0 0 1px rgba(255,255,255,.025), 0 16px 40px rgba(0,0,0,.28);
+    }}
+    .flow-row {{ display:flex; align-items:stretch; gap:10px; }}
+    .flow-row + .flow-row {{ margin-top:12px; }}
+    .flow-node {{
+      flex:1; min-height:78px; padding:13px 14px; border:1px solid rgba(255,255,255,.08);
+      border-left:5px solid var(--accent,var(--jade)); border-radius:10px;
+      background:linear-gradient(180deg,rgba(27,37,33,.98),rgba(16,22,20,.98));
+      display:flex; flex-direction:column; justify-content:center;
+    }}
+    .flow-node strong {{ display:block; font-size:16px; line-height:1.25; }}
+    .flow-node span {{ display:block; margin-top:5px; color:var(--muted); font-size:12px; }}
+    .flow-node.decision {{
+      border-color:rgba(212,173,95,.36); border-left-color:var(--gold);
+      background:linear-gradient(180deg,rgba(45,39,25,.96),rgba(18,21,18,.96));
+    }}
+    .flow-arrow {{
+      width:34px; min-width:34px; display:grid; place-items:center;
+      color:var(--gold); font-size:26px; font-weight:800;
+    }}
+    .branch-row {{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:12px; }}
+    .branch-card {{
+      padding:14px; border:1px solid rgba(255,255,255,.08); border-top:4px solid var(--accent,var(--jade));
+      border-radius:10px; background:rgba(255,255,255,.035);
+    }}
+    .branch-card b {{
+      display:inline-flex; margin-bottom:8px; padding:2px 8px; border-radius:999px;
+      background:var(--accent,var(--jade)); color:#08100d; font-size:12px;
+    }}
+    .branch-card strong {{ display:block; font-size:15px; }}
+    .branch-card span {{ display:block; margin-top:5px; color:var(--muted); font-size:12px; }}
+    .merge-note {{ margin:12px 0; color:var(--gold); text-align:center; font-size:13px; font-weight:700; }}
     .board {{
       position:relative; height:548px; overflow:auto; border-radius:14px;
       border:1px solid rgba(132,199,167,.2);
@@ -352,6 +386,9 @@ def render_html(project: dict[str, object], title: str) -> str:
     .footer {{ margin-top:22px; text-align:center; color:var(--muted); font-size:12px; }}
     @media (max-width: 980px) {{
       .hero,.grid,.steps {{ grid-template-columns:1fr; }}
+      .flow-row {{ flex-direction:column; }}
+      .flow-arrow {{ width:100%; min-width:0; min-height:24px; transform:rotate(90deg); }}
+      .branch-row {{ grid-template-columns:1fr; }}
       .meta-card {{ border-left:0; border-top:1px solid rgba(255,255,255,.08); }}
       .wrap {{ padding:18px 12px 34px; }}
       h1 {{ font-size:27px; }}
@@ -376,8 +413,63 @@ def render_html(project: dict[str, object], title: str) -> str:
       </aside>
     </section>
 
-    <h2>01 · 节点脑图总览</h2>
-    <p class="caption">像 ComfyUI 一样把生产链路拆成节点：每个节点有输入、工具、输出、确认点。面试时可以从左到右讲清楚“我怎么把故事变成可发布视频”。</p>
+    <h2>01 · 一眼看懂的主流程</h2>
+    <p class="caption">面试先讲这条主线：预告怎么从分镜变成静帧，再按镜头等级走不同平台，最后合成横版并裁竖版。</p>
+    <section class="simple-flow" aria-label="横版预告主流程">
+      <div class="flow-row">
+        <div class="flow-node" style="--accent: var(--gold)">
+          <strong>横版预告分镜</strong>
+          <span>确定镜头、字幕、音效、节奏钩子</span>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="--accent: var(--cyan)">
+          <strong>横版静帧</strong>
+          <span>MJ / Image2 / 即梦出16:9主图</span>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node decision">
+          <strong>镜头分级</strong>
+          <span>S级、失败兜底、B/C级分流处理</span>
+        </div>
+      </div>
+      <div class="branch-row">
+        <div class="branch-card" style="--accent: var(--jade)">
+          <b>S级</b>
+          <strong>可灵 / 即梦图生视频</strong>
+          <span>优先用低成本平台测试核心动态镜头</span>
+        </div>
+        <div class="branch-card" style="--accent: var(--red)">
+          <b>失败兜底</b>
+          <strong>Seedance 2</strong>
+          <span>只补最值钱、低成本平台失败的镜头</span>
+        </div>
+        <div class="branch-card" style="--accent: var(--purple)">
+          <b>B/C级</b>
+          <strong>剪映 / FFmpeg静帧动效</strong>
+          <span>慢推、横移、切黑、字幕音效完成画面运动</span>
+        </div>
+      </div>
+      <div class="merge-note">三路素材统一进入粗剪合成</div>
+      <div class="flow-row">
+        <div class="flow-node" style="--accent: var(--gold)">
+          <strong>粗剪合成</strong>
+          <span>视频、静帧动效、字幕、旁白、音效合成</span>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="--accent: var(--cyan)">
+          <strong>平台横版预告</strong>
+          <span>先完成16:9主母版</span>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="--accent: var(--jade)">
+          <strong>裁竖版</strong>
+          <span>9:16安全区检查，不裁掉人脸和关键道具</span>
+        </div>
+      </div>
+    </section>
+
+    <h2>02 · 详细节点脑图</h2>
+    <p class="caption">下面这张图用于展开细讲：每个节点有输入、工具、输出、确认点，呈现方式接近 ComfyUI 的生产节点。</p>
     <section class="board" aria-label="ComfyUI式工作流节点脑图">
       <div class="canvas">
         <svg class="links" viewBox="0 0 2070 525" preserveAspectRatio="none">
@@ -392,12 +484,12 @@ def render_html(project: dict[str, object], title: str) -> str:
       </div>
     </section>
 
-    <h2>02 · 面试讲解路径</h2>
+    <h2>03 · 面试讲解路径</h2>
     <section class="steps">{render_demo_steps()}</section>
 
     <div class="grid">
       <section>
-        <h2>03 · 平台确认表</h2>
+        <h2>04 · 平台确认表</h2>
         <div class="panel"><div class="panel-inner">
           <table>
             <thead><tr><th>环节</th><th>平台/工具</th><th>确认方式</th><th>输出物</th></tr></thead>
@@ -406,14 +498,14 @@ def render_html(project: dict[str, object], title: str) -> str:
         </div></div>
       </section>
       <section>
-        <h2>04 · 本地文件入口</h2>
+        <h2>05 · 本地文件入口</h2>
         <div class="panel"><div class="panel-inner">
           <ul class="file-list">{render_file_entry(project)}</ul>
         </div></div>
       </section>
     </div>
 
-    <h2>05 · 验收审核与自检</h2>
+    <h2>06 · 验收审核与自检</h2>
     <section class="panel"><div class="panel-inner">
       <table>
         <thead><tr><th>检查项</th><th>通过标准</th><th>失败处理</th></tr></thead>

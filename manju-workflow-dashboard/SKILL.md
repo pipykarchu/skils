@@ -30,7 +30,8 @@ Use offline HTML/CSS by default. Do not depend on CDN, Mermaid, login services, 
 Default new dashboards to an interview demonstration layout:
 
 - Put project identity and production target in the first screen.
-- Make the workflow graph the hero, visually similar to ComfyUI: dark canvas, connected nodes, colored node groups, compact ports, and visible flow from input to export.
+- Put a simple "one-glance" main flow before any complex graph, for example: `90秒横版预告分镜 -> 24张横版静帧 -> 镜头分级 -> 可灵/即梦/Seedance/FFmpeg -> 粗剪合成 -> 横版 -> 竖版`.
+- Make the detailed workflow graph visually similar to ComfyUI: dark canvas, connected nodes, colored node groups, compact ports, and visible flow from input to export.
 - Include an explanation path for how to present the workflow in 3-5 minutes.
 - Show both "what I operate" and "how I verify it": platform confirmation, acceptance criteria, fail conditions, and返工入口.
 - Keep it local/offline so it can open during an interview without network risk.
@@ -102,7 +103,7 @@ python C:\Users\Administrator\.codex\skills\manju-workflow-dashboard\scripts\gen
 ```
 
 5. Add or update a simple `.bat` opener if the path contains Chinese characters.
-6. Validate by checking the HTML exists and contains: `面试演示版`, `ComfyUI式节点脑图`, `剧本导入`, `AI 视觉生产中枢`, `平台确认表`, and `验收审核与自检`.
+6. Validate by checking the HTML exists and contains: `一眼看懂的主流程`, `镜头分级`, `Seedance 2`, `面试演示版`, `ComfyUI式节点脑图`, `平台确认表`, and `验收审核与自检`.
 
 ## Bundled Resources
 
