@@ -30,6 +30,7 @@ C:\Users\Administrator\.codex\skills\screenplay-director\SKILL.md
 | `screenplay-director` | 想把故事、小说片段或散乱文字整理成中文专业剧本时使用。它会先提炼剧情大纲，自动起标题，建立人物设定角色档案，并按【场景】【人物】【动作】【台词】【镜头提示】输出，保持男女主和反派出场描述一致，创建 Markdown 和 Word 文件。 | `$screenplay-director 把这段小说整理成专业剧本，要求每段包含场景、人物、动作、台词和镜头提示` |
 | `script-to-storyboard` | 想把剧本、小说片段、Word、PDF、Markdown 或网页内容拆成客观分镜头脚本，并输出可用于 AI 生图的 MD/Excel 分镜表时使用。 | `$script-to-storyboard 根据剧本文件和片段名称“妈妈病了”建立新的 MD 和 Excel 分镜脚本` |
 | `storyboard-image-prompts` | 想根据剧本、世界观、分镜表、角色档案或漫剧短剧分镜生成 AI 绘图提示词，并按人物、场景、世界观规则、连续性和生产平台选择合适模型时使用。 | `$storyboard-image-prompts 根据这份剧本、世界观和分镜表生成绘图提示词，并推荐每镜使用的平台和模型` |
+| `dingzhuangzao` | 想做漫剧角色定妆、角色正面肖像候选、MJ/Image2 两版提示词、网页多选标心、确认造型后三视图高清导出和总览拼图时使用。它会先读取世界观、年代设定、场景和角色资料，服装造型必须贴合项目设定。 | `$dingzhuangzao 读取这个漫剧项目的世界观和角色设定，先给每个角色生成四张正面定妆候选并做网页选择器` |
 | `manju-production-workflow` | 想从 0 到 1 做完整漫剧生产流水线时使用。它会协调 PRD、SOP、角色档案、剧本、分镜、AI 生图提示词和质检。 | `$manju-production-workflow 启动漫剧项目《重生后我不再忍了》，题材都市复仇，30集，每集60秒` |
 | `manju-workflow-dashboard` | 想把漫剧生产流程做成本地 HTML 网页看板，展示从剧本导入、分镜、出图、视频生成到成片验收的完整工作流时使用。 | `$manju-workflow-dashboard 给这个漫剧项目生成皮玺玉风格网页工作流看板` |
 
@@ -41,6 +42,7 @@ C:\Users\Administrator\.codex\skills\screenplay-director\SKILL.md
 - 要稳定女主、男主、反派的人物设定、绘图固定提示词和禁止变化特征，也用 `screenplay-director`。
 - 要把已有剧本按片段拆成镜号、时长、景别、运镜、画面内容提示词、人物台词和备注，用 `script-to-storyboard`。
 - 要根据剧本、世界观、角色设定和分镜生成绘图提示词，并为不同人物、场景选择 Midjourney、OpenAI Images、Gemini/Imagen、Runway、可灵、即梦、通义万相、混元或 SD/FLUX/ComfyUI，用 `storyboard-image-prompts`。
+- 要做角色定妆照、四张正面候选图、网页标心选择、MJ/Image2 双版本提示词、确认造型后三视图和高清总览，用 `dingzhuangzao`。
 - 要完整跑 PRD、SOP、剧本、分镜、提示词和质检，用 `manju-production-workflow`。
 - 要把漫剧生产流程做成本地网页看板、展示平台选择、确认点、验收和自检，用 `manju-workflow-dashboard`。
 
@@ -58,6 +60,10 @@ $script-to-storyboard 把这个剧本转成漫剧分镜表
 
 ```text
 $storyboard-image-prompts 根据这份世界观、角色设定和分镜表生成 AI 绘图提示词，并按镜头推荐平台和模型
+```
+
+```text
+$dingzhuangzao 读取项目世界观和角色设定，给主要角色生成定妆候选网页，确认后输出三视图
 ```
 
 ```text
@@ -81,6 +87,7 @@ $manju-production-workflow 启动漫剧项目《重生后我不再忍了》
 - `screenplay-director` 支持兔子 API 多模型流程，但只有用户明确要求调用 API 时才应该调用。
 - `script-to-storyboard` 支持通过兔子 API 先用 DeepSeek 写分镜初稿，再用 Claude 以导演编剧视角审查画面合理性、时长合理性、对话覆盖和运镜可实现性。
 - `storyboard-image-prompts` 会按任务推荐外部生图平台或模型，例如 Midjourney、OpenAI Images、Gemini/Imagen、Runway、可灵、即梦、通义万相、腾讯混元、Stable Diffusion、FLUX、ComfyUI；真正使用这些平台前，应确认账号授权、额度消耗、素材上传风险和当前模型版本。
+- `dingzhuangzao` 会生成 MJ/Image2 提示词和本地网页选择器；真正调用 Midjourney、Tuzi Image2 或其它生图平台前，应确认账号授权、余额消耗、参考图上传风险和当前模型版本。
 - `manju-production-workflow` 默认只协调本地文件和子 skill；只有用户明确要求外部模型或平台时才调用 API。
 - 调用外部 API 会消耗余额，也会把输入内容发送到第三方服务。
 - `prd-writer-agent` 默认工作环境是 Codex 实现、Claude 评审、Tuzi API 作为产品运行时模型网关；Tuzi 价格页 `https://api.tu-zi.com/pricing` 是默认核验入口。
