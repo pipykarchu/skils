@@ -496,15 +496,15 @@ def render_html(project: dict[str, object], title: str) -> str:
     }}
     details.detail-graph[open] > summary::after {{ content:"收起"; }}
     .node-detail {{
-      margin-top:14px; display:grid; grid-template-columns:280px 1fr; gap:14px;
+      margin-top:14px; display:grid; grid-template-columns:190px minmax(0,1fr); gap:14px;
       border:1px solid rgba(132,199,167,.28); border-radius:12px;
       background:linear-gradient(180deg,rgba(27,37,33,.96),rgba(16,22,20,.96));
       box-shadow:0 16px 40px rgba(0,0,0,.28); overflow:hidden;
     }}
-    .detail-aside {{ padding:16px; border-right:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.03); }}
-    .detail-aside b {{ display:block; color:var(--gold); font-size:15px; margin-bottom:8px; }}
-    .detail-aside p {{ margin:0; color:var(--muted); font-size:12px; }}
-    .detail-body {{ padding:16px; }}
+    .detail-aside {{ padding:12px; border-right:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.03); }}
+    .detail-aside b {{ display:block; color:var(--gold); font-size:13px; margin-bottom:6px; }}
+    .detail-aside p {{ margin:0; color:var(--muted); font-size:11px; line-height:1.45; }}
+    .detail-body {{ padding:16px 18px; }}
     .detail-body h3 {{ margin:0 0 8px; font-size:18px; }}
     .detail-body p {{ margin:0 0 12px; color:var(--muted); font-size:13px; }}
     .detail-body ol {{ margin:0; padding-left:22px; color:var(--text); }}
