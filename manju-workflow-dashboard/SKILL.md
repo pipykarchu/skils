@@ -1,13 +1,13 @@
 ---
 name: manju-workflow-dashboard
-description: Create local HTML workflow dashboards for AI 漫剧/短剧 production pipelines. Use when the user wants to visualize, document, audit, or package a production workflow from script import through storyboard, image generation, video generation, FFmpeg/editing, platform export, review, acceptance checks, or self-check QA; also use when the user asks for “网页看板”, “工作流看板”, “可视化工作流”, “皮玺玉风格”, or a low-cost platform-selection board for MJ/Image2/即梦/可灵/Seedance/FFmpeg/剪映.
+description: Create local HTML workflow dashboards for AI 漫剧/短剧 production pipelines, especially interview/demo boards with project information, ComfyUI-style node graphs/mind maps, operation steps, platform choices, review gates, and self-check QA. Use when the user wants “网页看板”, “工作流看板”, “可视化工作流”, “脑图”, “ComfyUI风格”, “面试演示”, “皮玺玉风格”, or a low-cost platform-selection board for MJ/Image2/即梦/可灵/Seedance/FFmpeg/剪映.
 ---
 
 # Manju Workflow Dashboard
 
 ## Purpose
 
-Generate an offline, local HTML dashboard that explains an AI 漫剧 production workflow end to end. Keep it practical: show what file enters each stage, which platform to use, how to confirm the output, and what self-check must pass before moving on.
+Generate an offline, local HTML dashboard that explains an AI 漫剧 production workflow end to end. Keep it practical and interview-ready: show project information, a ComfyUI-like node graph/mind map, what file enters each stage, which platform to use, how to confirm the output, and what self-check must pass before moving on.
 
 ## Default Output
 
@@ -24,6 +24,16 @@ Also create an ASCII-named open script if helpful:
 ```
 
 Use offline HTML/CSS by default. Do not depend on CDN, Mermaid, login services, or remote assets unless the user asks.
+
+## Interview/Demo Mode
+
+Default new dashboards to an interview demonstration layout:
+
+- Put project identity and production target in the first screen.
+- Make the workflow graph the hero, visually similar to ComfyUI: dark canvas, connected nodes, colored node groups, compact ports, and visible flow from input to export.
+- Include an explanation path for how to present the workflow in 3-5 minutes.
+- Show both "what I operate" and "how I verify it": platform confirmation, acceptance criteria, fail conditions, and返工入口.
+- Keep it local/offline so it can open during an interview without network risk.
 
 ## Dashboard Scope
 
@@ -60,6 +70,7 @@ Core visual direction:
 - Dense but readable cards/tables
 - Low-glow borders, film-grain feeling, no decorative orb blobs
 - Workflow is the hero; avoid oversized marketing sections
+- ComfyUI-inspired node graph for workflow overview; avoid remote diagram libraries.
 
 ## Platform Decision Rules
 
@@ -91,7 +102,7 @@ python C:\Users\Administrator\.codex\skills\manju-workflow-dashboard\scripts\gen
 ```
 
 5. Add or update a simple `.bat` opener if the path contains Chinese characters.
-6. Validate by checking the HTML exists, contains the full stage list, and opens with a browser.
+6. Validate by checking the HTML exists and contains: `面试演示版`, `ComfyUI式节点脑图`, `剧本导入`, `AI 视觉生产中枢`, `平台确认表`, and `验收审核与自检`.
 
 ## Bundled Resources
 

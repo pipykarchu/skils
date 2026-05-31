@@ -1,166 +1,454 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Generate an offline HTML workflow dashboard for AI 漫剧 production."""
+"""Generate an offline ComfyUI-style workflow dashboard for AI manju production."""
 
 from __future__ import annotations
 
 import argparse
+import csv
 import html
-import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
 
 
-@dataclass
-class Stage:
-    no: str
+@dataclass(frozen=True)
+class Node:
+    id: str
+    x: int
+    y: int
+    w: int
+    h: int
+    kind: str
     title: str
-    input_: str
-    tool: str
-    output: str
-    confirm: str
-    fail: str
+    body: str
+    meta: str
 
 
-DEFAULT_STAGES = [
-    Stage("01", "剧本导入", "05_剧本/*.md 或用户提供剧本文本", "Codex / 剧本解析 / 人工确认", "剧本清单、集数、角色名、故事口径", "标题、人物、集数、时长、平台方向已确认", "缺剧本、称呼混乱、集数不明"),
-    Stage("02", "分镜拆解", "剧本、角色档案、年代设定", "script-to-storyboard / Codex", "06_分镜表/*.md / *.xlsx", "每镜有画面、时长、台词、音效、运镜", "镜头不可画、台词过长、总时长失控"),
-    Stage("03", "角色道具定版", "03_角色设定、关键剧情道具", "MJ / Image2 / 即梦", "角色母版、道具母版、风格锚点", "脸、服装、年代、道具数量稳定", "换脸、服装跑偏、道具错误"),
-    Stage("04", "横版静帧出图", "分镜和生图提示词", "MJ / Image2 / 即梦", "shot_01.png 到 shot_XX.png", "静帧连播能看懂故事", "构图不适合裁切、主体不清、风格不统一"),
-    Stage("05", "动态镜头分级", "静帧主图、分镜表", "人工筛选 / Codex 分级", "S/A/B/C 镜头清单", "付费镜头不超过预算，S 级明确", "所有镜头都想付费、预算不可控"),
-    Stage("06", "图生视频", "S/A 级静帧", "可灵 / 即梦 / Seedance 2", "videos_ai/shot_XX.mp4", "不换脸、不多手、动作可读、道具正确", "脸漂移、年代错、怪物风格错、动作糊"),
-    Stage("07", "静帧动效", "B/C 级静帧", "FFmpeg / 剪映 / CapCut", "videos_static/shot_XX.mp4", "慢推、横移、快切、切黑节奏自然", "静帧停太久、运动眩晕、字幕遮脸"),
-    Stage("08", "声音字幕", "剧本台词、旁白、音效表", "剪映 / TTS / 音效库", "voice.wav、preview.srt、音效轨", "关画面也能听懂故事", "音乐盖人声、字幕过长、音效乱"),
-    Stage("09", "本地合成", "AI 视频、静帧动效、字幕音频", "FFmpeg / 剪映", "exports/*.mp4", "时长、字幕、音画同步通过", "丢镜头、黑帧、错序、导出参数错"),
-    Stage("10", "平台导出", "横版母版", "剪映 / PR / 达芬奇", "B站横版、抖音竖版、红果竖版", "安全区、封面、标题、结尾钩子通过", "裁掉关键道具、前3秒无钩子"),
-    Stage("11", "验收审核", "成片和清单", "人工 QC / Codex 清单", "08_成片检查/*.md", "故事、角色、道具、平台规范全过", "辫子数量错、称呼错、付费秒数超预算"),
-    Stage("12", "返工闭环", "审核问题表", "按问题归类回到对应阶段", "返工记录、最终版", "每个问题有负责人、工具和完成状态", "只记录问题不闭环"),
+@dataclass(frozen=True)
+class Edge:
+    source: str
+    target: str
+
+
+NODES = [
+    Node("script", 30, 80, 210, 116, "input", "剧本导入", "05_剧本、原始纪要、PRD", "确认集数/主线/称呼"),
+    Node("storyboard", 310, 55, 220, 122, "process", "分镜拆解", "06_分镜表、镜头时长、台词", "每镜可画可剪"),
+    Node("character", 310, 215, 220, 122, "process", "角色/道具定版", "角色母版、娃娃、姜、年代服装", "脸/服装/道具稳定"),
+    Node("hub", 610, 120, 245, 150, "hub", "AI 视觉生产中枢", "把镜头分成静帧、图生视频、付费兜底三类", "成本优先，质量兜底"),
+    Node("image", 935, 35, 230, 120, "tool", "MJ / Image2 / 即梦", "横版关键静帧、封面、角色定版", "先静帧过审"),
+    Node("video", 935, 195, 230, 120, "tool", "可灵 / 即梦视频", "S/A镜头图生视频测试", "先跑低成本草稿"),
+    Node("seedance", 935, 355, 230, 120, "paid", "Seedance 2 兜底", "只补最高价值失败镜头", "记录付费秒数"),
+    Node("style", 610, 340, 245, 118, "style", "皮玺玉光影", "暗玉、墨黑、冷金、雾霭、胶片质感", "统一视觉风格"),
+    Node("tasks", 1235, 115, 230, 126, "output", "提示词任务清单", "image/video task manifests", "批量生产可追踪"),
+    Node("ffmpeg", 1235, 310, 230, 124, "process", "FFmpeg 静帧动效", "慢推、横移、切黑、粗剪", "不用付费先成片"),
+    Node("edit", 1530, 210, 230, 132, "process", "剪映 / CapCut 合成", "字幕、旁白、音效、节奏", "音画同步"),
+    Node("bili", 1815, 105, 210, 118, "export", "B站横版", "1920x1080 主母版", "封面/前三秒钩子"),
+    Node("vertical", 1815, 285, 210, 118, "export", "抖音 / 红果竖版", "9:16裁切与安全区检查", "不裁掉关键道具"),
+]
+
+EDGES = [
+    Edge("script", "storyboard"),
+    Edge("script", "character"),
+    Edge("storyboard", "hub"),
+    Edge("character", "hub"),
+    Edge("hub", "image"),
+    Edge("hub", "video"),
+    Edge("hub", "seedance"),
+    Edge("style", "image"),
+    Edge("style", "video"),
+    Edge("image", "tasks"),
+    Edge("video", "tasks"),
+    Edge("seedance", "tasks"),
+    Edge("tasks", "ffmpeg"),
+    Edge("ffmpeg", "edit"),
+    Edge("edit", "bili"),
+    Edge("edit", "vertical"),
+]
+
+PLATFORM_ROWS = [
+    ("剧本/PRD", "Codex + 本地文档", "标题、集数、主角称呼、现实线/故事线是否一致", "PRD与分集剧本"),
+    ("角色/道具定版", "MJ / Image2 / 即梦", "脸、年龄、服装、娃娃五根辫子、姜盒是否稳定", "角色母版、道具母版"),
+    ("横版静帧", "Image2 / MJ / 即梦", "16:9构图可裁竖版，人物和道具无遮挡", "shot_XX.png"),
+    ("图生视频", "可灵 / 即梦视频", "不换脸、不多手、不乱道具，动作读得清", "videos_ai/shot_XX.mp4"),
+    ("付费兜底", "Seedance 2", "只用于S级失败镜头，先低清测试再升质量", "付费镜头记录"),
+    ("本地成片", "FFmpeg + 剪映/CapCut", "字幕、音效、旁白、节奏、横竖版安全区", "B站横版/竖版导出"),
+]
+
+QA_ROWS = [
+    ("故事", "现实线、故事线、结尾扫墓逻辑能闭环", "回到PRD/剧本修正"),
+    ("人物称呼", "姜苗、姜生、阿妮、小妮儿、姥姥姥爷称呼统一", "统一台词和字幕"),
+    ("道具连续性", "娃娃辫子数量、红布姜、密码盒、火堆等关键道具不乱", "回到静帧或图生视频返工"),
+    ("平台成本", "先静帧粗剪，免费/低成本动态图过审后再花钱", "降低镜头等级或改静帧动效"),
+    ("画面安全区", "横版主母版可裁竖版，字幕不遮脸不遮关键道具", "重排字幕或重构图"),
+    ("发布前检查", "前三秒有钩子，封面明确，音画同步，字幕无错字", "剪映/FFmpeg返工"),
+]
+
+DEMO_STEPS = [
+    ("1", "先讲项目", "《娃娃仙》是民俗恐怖志怪漫剧，现实线由阿妮给姜苗、姜生讲故事，故事线回到小妮儿被娃娃仙护主。"),
+    ("2", "再讲链路", "从剧本导入开始，拆分镜、定角色道具、出静帧、跑图生视频、本地合成、横版发布、竖版裁切。"),
+    ("3", "突出成本", "静帧和FFmpeg先把片子跑通，可灵/即梦做动态测试，Seedance只给S级失败镜头兜底。"),
+    ("4", "展示审核", "每个节点都有输入、输出、确认点和失败条件，面试时说明这是可复用的生产管线。"),
 ]
 
 
+def esc(value: object) -> str:
+    return html.escape(str(value), quote=True)
+
+
 def count_files(root: Path, pattern: str) -> int:
-    return len(list(root.glob(pattern))) if root.exists() else 0
+    if not root.exists():
+        return 0
+    return len(list(root.glob(pattern)))
 
 
-def infer_project(root: Path) -> dict:
+def find_preview_csv(root: Path) -> Path | None:
+    candidates = [
+        root / "09_素材与参考" / "预告剪辑版" / "manifests" / "preview_shots.csv",
+        root / "09_素材与参考" / "预告剪辑版" / "preview_shots.csv",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    matches = list(root.glob("**/preview_shots.csv"))
+    return matches[0] if matches else None
+
+
+def read_preview_stats(root: Path) -> dict[str, object]:
+    csv_path = find_preview_csv(root)
+    stats: dict[str, object] = {"shots": "待确认", "duration": "按项目文件", "dynamic": "按镜头分级"}
+    if not csv_path:
+        return stats
+
+    try:
+        with csv_path.open("r", encoding="utf-8-sig", newline="") as f:
+            rows = list(csv.DictReader(f))
+    except OSError:
+        return stats
+
+    if rows:
+        stats["shots"] = f"{len(rows)}镜"
+        total = 0.0
+        for row in rows:
+            try:
+                total += float(row.get("duration", "") or 0)
+            except ValueError:
+                pass
+        if total:
+            stats["duration"] = f"{int(round(total))}秒"
+        dynamic = 0
+        for row in rows:
+            text = " ".join(str(row.get(k, "")) for k in ("motion", "platform", "priority"))
+            if row.get("priority", "").strip().upper() in {"S", "A"} or re.search("可灵|Seedance|图生视频|视频", text):
+                dynamic += 1
+        if dynamic:
+            stats["dynamic"] = f"{dynamic}条动态镜头"
+    return stats
+
+
+def infer_project(root: Path) -> dict[str, object]:
+    scripts = count_files(root / "05_剧本", "*.md")
+    storyboards = count_files(root / "06_分镜表", "*.md")
+    prompts = count_files(root / "07_绘图提示词", "*.md")
+    sop = count_files(root / "01_生产SOP", "*.md") + count_files(root / "01_生产SOP", "*.html")
+    preview = read_preview_stats(root)
+    episode_value = f"{scripts}集" if scripts else "待确认"
+
     return {
         "name": root.name,
-        "scripts": count_files(root, "05_剧本/*.md"),
-        "storyboards": count_files(root, "06_分镜表/*.md"),
-        "prompts": count_files(root, "07_绘图提示词/*.md"),
-        "sop": count_files(root, "01_生产SOP/*.md") + count_files(root, "01_生产SOP/*.html"),
+        "root": str(root),
+        "episodes": episode_value,
+        "duration": preview["duration"],
+        "shots": preview["shots"],
+        "dynamic": preview["dynamic"],
+        "scripts": scripts,
+        "storyboards": storyboards,
+        "prompts": prompts,
+        "sop": sop,
     }
 
 
-def esc(s: str) -> str:
-    return html.escape(str(s), quote=True)
+def render_edges() -> str:
+    by_id = {node.id: node for node in NODES}
+    parts = []
+    for edge in EDGES:
+        src = by_id[edge.source]
+        dst = by_id[edge.target]
+        x1 = src.x + src.w
+        y1 = src.y + src.h // 2
+        x2 = dst.x
+        y2 = dst.y + dst.h // 2
+        mid = x1 + max(55, (x2 - x1) // 2)
+        parts.append(
+            f'<path d="M{x1},{y1} C{mid},{y1} {mid},{y2} {x2},{y2}" '
+            'fill="none" stroke="rgba(136,185,162,.62)" stroke-width="2.2" marker-end="url(#arrow)"/>'
+        )
+    return "\n".join(parts)
 
 
-def stage_cards(stages: list[Stage]) -> str:
-    cards = []
-    for st in stages:
-        cards.append(f"""
-        <article class="stage">
-          <div class="num">{esc(st.no)}</div>
-          <h3>{esc(st.title)}</h3>
-          <dl>
-            <dt>输入</dt><dd>{esc(st.input_)}</dd>
-            <dt>平台/工具</dt><dd>{esc(st.tool)}</dd>
-            <dt>输出</dt><dd>{esc(st.output)}</dd>
-            <dt>确认</dt><dd>{esc(st.confirm)}</dd>
-            <dt>失败</dt><dd>{esc(st.fail)}</dd>
-          </dl>
-        </article>""")
-    return "\n".join(cards)
+def render_nodes() -> str:
+    parts = []
+    for node in NODES:
+        parts.append(
+            f"""
+        <article class="node {esc(node.kind)}" style="left:{node.x}px;top:{node.y}px;width:{node.w}px;height:{node.h}px">
+          <div class="node-head"><span class="port"></span><strong>{esc(node.title)}</strong><span class="port out"></span></div>
+          <p>{esc(node.body)}</p>
+          <small>{esc(node.meta)}</small>
+        </article>"""
+        )
+    return "\n".join(parts)
 
 
-def render_html(project: dict, stages: list[Stage], title: str) -> str:
+def render_platform_rows() -> str:
+    return "\n".join(
+        f"<tr><td>{esc(stage)}</td><td>{esc(tool)}</td><td>{esc(check)}</td><td>{esc(output)}</td></tr>"
+        for stage, tool, check, output in PLATFORM_ROWS
+    )
+
+
+def render_qa_rows() -> str:
+    return "\n".join(
+        f"<tr><td>{esc(item)}</td><td>{esc(pass_rule)}</td><td>{esc(fix)}</td></tr>"
+        for item, pass_rule, fix in QA_ROWS
+    )
+
+
+def render_demo_steps() -> str:
+    return "\n".join(
+        f"""
+        <article class="step">
+          <b>{esc(no)}</b>
+          <div><h3>{esc(title)}</h3><p>{esc(body)}</p></div>
+        </article>"""
+        for no, title, body in DEMO_STEPS
+    )
+
+
+def render_file_entry(project: dict[str, object]) -> str:
+    root = Path(str(project["root"]))
+    entries = [
+        ("PRD/SOP", root / "00_PRD"),
+        ("剧本", root / "05_剧本"),
+        ("分镜表", root / "06_分镜表"),
+        ("绘图提示词", root / "07_绘图提示词"),
+        ("预告素材包", root / "09_素材与参考" / "预告剪辑版"),
+        ("自动化脚本", root / "10_自动化脚本"),
+    ]
+    return "\n".join(
+        f'<li><span>{esc(label)}</span><code>{esc(path)}</code></li>' for label, path in entries
+    )
+
+
+def render_html(project: dict[str, object], title: str) -> str:
     return f"""<!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{esc(title)}</title>
-<style>
-:root{{--bg:#0d1110;--panel:#17201d;--panel2:#1e2a26;--line:#33453f;--text:#edf4ef;--muted:#a8b5af;--jade:#7fb69b;--gold:#d1ad62;--cyan:#7fb3c1;--red:#c97362;}}
-*{{box-sizing:border-box}}body{{margin:0;background:linear-gradient(180deg,#0d1110,#121816);color:var(--text);font-family:"Microsoft YaHei","PingFang SC",Arial,sans-serif;line-height:1.55}}
-.wrap{{max-width:1380px;margin:auto;padding:34px 28px 58px}}
-.hero,.card,.stage{{background:linear-gradient(180deg,rgba(30,42,38,.96),rgba(17,24,22,.96));border:1px solid var(--line);border-radius:10px;box-shadow:0 18px 45px rgba(0,0,0,.32)}}
-.hero{{padding:28px;margin-bottom:22px}}.eyebrow{{color:var(--jade);font-size:13px;margin:0 0 8px}}h1{{margin:0;font-size:34px;line-height:1.15}}.hero p{{color:var(--muted);max-width:900px}}
-.metrics{{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0 0}}.metric{{padding:13px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:8px}}.metric b{{display:block;color:var(--gold);font-size:22px}}.metric span{{color:var(--muted);font-size:12px}}
-h2{{font-size:21px;margin:30px 0 14px}}.flow{{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}}.stage{{padding:15px;position:relative;min-height:245px}}.stage:before{{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--jade)}}.stage .num{{display:inline-flex;background:var(--gold);color:#101410;border-radius:999px;padding:2px 9px;font-weight:700;font-size:12px}}h3{{margin:10px 0 12px;font-size:16px}}dl{{margin:0}}dt{{float:left;clear:left;width:68px;color:var(--jade);font-size:12px;font-weight:700}}dd{{margin:0 0 8px 76px;color:var(--muted);font-size:12px}}
-.grid{{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}}.card{{padding:18px}}.card h3{{margin-top:0}}.card li,.card p{{color:var(--muted);font-size:13px}}code{{color:var(--jade);background:rgba(127,182,155,.08);border:1px solid rgba(127,182,155,.16);border-radius:6px;padding:2px 6px}}table{{width:100%;border-collapse:collapse;border:1px solid var(--line);border-radius:10px;overflow:hidden}}th,td{{padding:12px;border-bottom:1px solid rgba(255,255,255,.07);font-size:13px;text-align:left}}th{{background:rgba(255,255,255,.05)}}td{{color:var(--muted)}}.footer{{margin-top:28px;color:var(--muted);font-size:12px;text-align:center}}
-@media(max-width:1100px){{.flow{{grid-template-columns:repeat(2,1fr)}}.grid,.metrics{{grid-template-columns:1fr 1fr}}}}@media(max-width:680px){{.wrap{{padding:20px 14px 38px}}.flow,.grid,.metrics{{grid-template-columns:1fr}}h1{{font-size:27px}}}}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{esc(title)}</title>
+  <style>
+    :root {{
+      --bg:#090f0d; --panel:#13201d; --panel2:#1b2a25; --line:#314b42;
+      --text:#eef6f1; --muted:#9fb3ab; --jade:#84c7a7; --gold:#d4ad5f;
+      --cyan:#7ab8c5; --red:#d27b67; --purple:#a78bd8; --shadow:rgba(0,0,0,.38);
+    }}
+    * {{ box-sizing:border-box; }}
+    body {{
+      margin:0; color:var(--text); font-family:"Microsoft YaHei","PingFang SC",Arial,sans-serif;
+      background:
+        radial-gradient(circle at 18% 8%, rgba(132,199,167,.11), transparent 32%),
+        linear-gradient(180deg,#08100e 0%,#0f1714 45%,#090d0c 100%);
+      line-height:1.55;
+    }}
+    .wrap {{ max-width:1480px; margin:0 auto; padding:28px 24px 48px; }}
+    .hero {{
+      display:grid; grid-template-columns:1.3fr .9fr; gap:18px; align-items:stretch;
+      border:1px solid rgba(132,199,167,.22); border-radius:14px;
+      background:linear-gradient(135deg,rgba(24,42,37,.96),rgba(11,18,16,.96));
+      box-shadow:0 24px 70px var(--shadow); overflow:hidden;
+    }}
+    .hero-main {{ padding:26px 28px; }}
+    .eyebrow {{ margin:0 0 8px; color:var(--jade); font-size:13px; letter-spacing:0; }}
+    h1 {{ margin:0; font-size:34px; line-height:1.16; letter-spacing:0; }}
+    .hero-main p:last-child {{ max-width:820px; color:var(--muted); margin-bottom:0; }}
+    .meta-card {{
+      padding:20px; border-left:1px solid rgba(255,255,255,.08);
+      background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));
+    }}
+    .meta-grid {{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }}
+    .metric {{
+      min-height:76px; padding:12px; border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.04); border-radius:9px;
+    }}
+    .metric b {{ display:block; color:var(--gold); font-size:22px; line-height:1.1; }}
+    .metric span {{ display:block; color:var(--muted); font-size:12px; margin-top:7px; }}
+    h2 {{ margin:28px 0 12px; font-size:21px; letter-spacing:0; }}
+    .caption {{ margin:0 0 14px; color:var(--muted); font-size:13px; }}
+    .board {{
+      position:relative; height:548px; overflow:auto; border-radius:14px;
+      border:1px solid rgba(132,199,167,.2);
+      background:
+        linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px),
+        linear-gradient(90deg,rgba(255,255,255,.028) 1px, transparent 1px),
+        #0c1311;
+      background-size:24px 24px;
+      box-shadow:inset 0 0 0 1px rgba(0,0,0,.25), 0 18px 54px var(--shadow);
+    }}
+    .canvas {{ position:relative; width:2070px; height:525px; }}
+    .links {{ position:absolute; inset:0; width:2070px; height:525px; pointer-events:none; }}
+    .node {{
+      position:absolute; border:1px solid rgba(132,199,167,.28); border-radius:10px;
+      background:linear-gradient(180deg,rgba(27,42,37,.97),rgba(13,19,17,.97));
+      box-shadow:0 12px 30px rgba(0,0,0,.34); overflow:hidden;
+    }}
+    .node-head {{
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+      padding:9px 10px; min-height:38px; border-bottom:1px solid rgba(255,255,255,.08);
+      background:rgba(132,199,167,.08);
+    }}
+    .node strong {{ font-size:14px; color:var(--text); }}
+    .node p {{ margin:10px 12px 4px; color:var(--muted); font-size:12px; }}
+    .node small {{ display:block; margin:0 12px; color:var(--gold); font-size:11px; }}
+    .port {{ width:9px; height:9px; border-radius:50%; background:var(--jade); box-shadow:0 0 10px rgba(132,199,167,.8); flex:0 0 auto; }}
+    .out {{ background:var(--gold); box-shadow:0 0 10px rgba(212,173,95,.8); }}
+    .input .node-head {{ background:rgba(122,184,197,.12); }}
+    .tool .node-head {{ background:rgba(132,199,167,.12); }}
+    .paid .node-head {{ background:rgba(210,123,103,.14); }}
+    .style .node-head {{ background:rgba(167,139,216,.14); }}
+    .export .node-head {{ background:rgba(212,173,95,.14); }}
+    .hub {{ border-color:rgba(212,173,95,.52); }}
+    .hub .node-head {{ background:rgba(212,173,95,.16); }}
+    .grid {{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }}
+    .panel {{
+      border:1px solid rgba(132,199,167,.2); border-radius:12px;
+      background:linear-gradient(180deg,rgba(25,39,35,.94),rgba(13,19,17,.94));
+      box-shadow:0 16px 42px var(--shadow);
+    }}
+    .panel-inner {{ padding:18px; }}
+    .steps {{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }}
+    .step {{
+      display:flex; gap:12px; padding:14px; border:1px solid rgba(255,255,255,.08);
+      border-radius:10px; background:rgba(255,255,255,.035);
+    }}
+    .step b {{
+      display:grid; place-items:center; width:30px; height:30px; border-radius:50%;
+      background:var(--gold); color:#111611; flex:0 0 auto;
+    }}
+    .step h3 {{ margin:0 0 5px; font-size:14px; }}
+    .step p {{ margin:0; color:var(--muted); font-size:12px; }}
+    table {{ width:100%; border-collapse:collapse; overflow:hidden; border-radius:12px; }}
+    th,td {{ padding:12px 13px; border-bottom:1px solid rgba(255,255,255,.08); text-align:left; vertical-align:top; font-size:13px; }}
+    th {{ color:var(--jade); background:rgba(255,255,255,.04); }}
+    td {{ color:var(--muted); }}
+    .file-list {{ list-style:none; padding:0; margin:0; display:grid; gap:9px; }}
+    .file-list li {{ display:grid; grid-template-columns:110px 1fr; gap:10px; align-items:start; }}
+    .file-list span {{ color:var(--jade); font-size:13px; }}
+    code {{
+      display:block; color:#c7e5d6; white-space:normal; overflow-wrap:anywhere;
+      background:rgba(132,199,167,.075); border:1px solid rgba(132,199,167,.14);
+      border-radius:7px; padding:7px 8px; font-family:Consolas,"Microsoft YaHei",monospace; font-size:12px;
+    }}
+    .footer {{ margin-top:22px; text-align:center; color:var(--muted); font-size:12px; }}
+    @media (max-width: 980px) {{
+      .hero,.grid,.steps {{ grid-template-columns:1fr; }}
+      .meta-card {{ border-left:0; border-top:1px solid rgba(255,255,255,.08); }}
+      .wrap {{ padding:18px 12px 34px; }}
+      h1 {{ font-size:27px; }}
+    }}
+  </style>
 </head>
-<body><div class="wrap">
-<section class="hero">
-<p class="eyebrow">皮玺玉风格 · 漫剧生产工作流</p>
-<h1>{esc(title)}</h1>
-<p>从剧本导入开始，到分镜、出图、图生视频、FFmpeg/剪映合成、平台导出、验收审核和返工闭环。看板用于明确每一步用什么平台、怎么确认、什么情况必须返工。</p>
-<div class="metrics">
-<div class="metric"><b>{esc(project["name"])}</b><span>项目</span></div>
-<div class="metric"><b>{project["scripts"]}</b><span>剧本文件</span></div>
-<div class="metric"><b>{project["storyboards"]}</b><span>分镜文件</span></div>
-<div class="metric"><b>{project["prompts"]}</b><span>提示词文件</span></div>
-</div>
-</section>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <div class="hero-main">
+        <p class="eyebrow">面试演示版 · ComfyUI式节点脑图 · 皮玺玉风格</p>
+        <h1>{esc(title)}</h1>
+        <p>这张看板用于现场演示：把一个民俗恐怖志怪漫剧项目，从剧本导入、分镜拆解、AI出图、图生视频、FFmpeg/剪映合成，到B站横版发布和竖版裁切，完整呈现为可讲解、可落地、可验收的节点化工作流。</p>
+      </div>
+      <aside class="meta-card">
+        <div class="meta-grid">
+          <div class="metric"><b>{esc(project["episodes"])}</b><span>分集规模</span></div>
+          <div class="metric"><b>{esc(project["duration"])}</b><span>预告/成片时长</span></div>
+          <div class="metric"><b>{esc(project["shots"])}</b><span>镜头任务</span></div>
+          <div class="metric"><b>{esc(project["dynamic"])}</b><span>动态镜头策略</span></div>
+        </div>
+      </aside>
+    </section>
 
-<h2>端到端流程</h2>
-<section class="flow">{stage_cards(stages)}</section>
+    <h2>01 · 节点脑图总览</h2>
+    <p class="caption">像 ComfyUI 一样把生产链路拆成节点：每个节点有输入、工具、输出、确认点。面试时可以从左到右讲清楚“我怎么把故事变成可发布视频”。</p>
+    <section class="board" aria-label="ComfyUI式工作流节点脑图">
+      <div class="canvas">
+        <svg class="links" viewBox="0 0 2070 525" preserveAspectRatio="none">
+          <defs>
+            <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="rgba(136,185,162,.72)"></path>
+            </marker>
+          </defs>
+          {render_edges()}
+        </svg>
+        {render_nodes()}
+      </div>
+    </section>
 
-<h2>平台选择</h2>
-<section class="grid">
-<article class="card"><h3>免费/低成本优先</h3><ul><li>MJ/Image2：角色定版、道具、封面。</li><li>即梦：中文旧村、堂屋、竹林、坟地静帧。</li><li>可灵：先跑图生视频草稿。</li></ul></article>
-<article class="card"><h3>付费兜底</h3><ul><li>Seedance 2 只补最高价值动态镜头。</li><li>先 720p 草稿，验收通过再升质量。</li><li>统计付费秒数和重跑次数。</li></ul></article>
-<article class="card"><h3>本地合成</h3><ul><li>FFmpeg 做静帧动效和自动粗剪。</li><li>剪映做字幕、音效、最终节奏。</li><li>先出横版母版，再裁竖版。</li></ul></article>
-</section>
+    <h2>02 · 面试讲解路径</h2>
+    <section class="steps">{render_demo_steps()}</section>
 
-<h2>验收自检</h2>
-<table><thead><tr><th>检查项</th><th>通过标准</th><th>失败处理</th></tr></thead><tbody>
-<tr><td>剧本</td><td>人物称呼、集数、平台口径一致</td><td>回到剧本导入阶段修正</td></tr>
-<tr><td>分镜</td><td>每镜有画面、时长、字幕/台词、音效</td><td>重拆不可画镜头</td></tr>
-<tr><td>静帧</td><td>角色脸、服装、年代、道具数量稳定</td><td>回到角色/道具定版</td></tr>
-<tr><td>视频</td><td>不换脸、不多手、不乱道具、不变风格</td><td>换平台或降级为静帧动效</td></tr>
-<tr><td>合成</td><td>音画同步，字幕不遮脸，前3秒有钩子</td><td>剪辑返工</td></tr>
-<tr><td>导出</td><td>B站横版清晰，竖版不裁掉关键道具</td><td>重新构图或重裁</td></tr>
-</tbody></table>
+    <div class="grid">
+      <section>
+        <h2>03 · 平台确认表</h2>
+        <div class="panel"><div class="panel-inner">
+          <table>
+            <thead><tr><th>环节</th><th>平台/工具</th><th>确认方式</th><th>输出物</th></tr></thead>
+            <tbody>{render_platform_rows()}</tbody>
+          </table>
+        </div></div>
+      </section>
+      <section>
+        <h2>04 · 本地文件入口</h2>
+        <div class="panel"><div class="panel-inner">
+          <ul class="file-list">{render_file_entry(project)}</ul>
+        </div></div>
+      </section>
+    </div>
 
-<h2>常用命令</h2>
-<section class="card">
-<p>生成看板：</p>
-<p><code>python C:\\Users\\Administrator\\.codex\\skills\\manju-workflow-dashboard\\scripts\\generate_dashboard.py --project-root "{esc(project["name"])}"</code></p>
-<p>FFmpeg 预告粗剪通常在项目素材包里运行，先放好 <code>shot_01.png</code> 到 <code>shot_24.png</code>。</p>
-</section>
+    <h2>05 · 验收审核与自检</h2>
+    <section class="panel"><div class="panel-inner">
+      <table>
+        <thead><tr><th>检查项</th><th>通过标准</th><th>失败处理</th></tr></thead>
+        <tbody>{render_qa_rows()}</tbody>
+      </table>
+    </div></section>
 
-<div class="footer">Generated by manju-workflow-dashboard · 皮玺玉风格 · Offline HTML</div>
-</div></body></html>"""
+    <div class="footer">{esc(project["name"])} 面试演示工作流看板 · ComfyUI式节点脑图 · 皮玺玉风格 · 本地离线 HTML</div>
+  </main>
+</body>
+</html>"""
 
 
 def write_opener(output: Path) -> None:
     opener = output.with_name("open_workflow_dashboard.bat")
-    opener.write_text('@echo off\nset "DIR=%~dp0"\nstart "" "%DIR%workflow_dashboard.html"\n', encoding="utf-8")
+    opener.write_text(
+        '@echo off\nset "DIR=%~dp0"\nstart "" "%DIR%workflow_dashboard.html"\n',
+        encoding="utf-8",
+    )
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Generate an interview-ready manju workflow dashboard.")
     parser.add_argument("--project-root", type=Path, required=True)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--title", default=None)
-    parser.add_argument("--stages-json", type=Path, help="Optional JSON list of stage objects")
     args = parser.parse_args()
 
     root = args.project_root.resolve()
     output = args.output or (root / "01_生产SOP" / "workflow_dashboard.html")
     output.parent.mkdir(parents=True, exist_ok=True)
-    stages = DEFAULT_STAGES
-    if args.stages_json:
-        data = json.loads(args.stages_json.read_text(encoding="utf-8"))
-        stages = [Stage(**item) for item in data]
-    title = args.title or f"{root.name} 漫剧生产工作流看板"
-    html_text = render_html(infer_project(root), stages, title)
-    output.write_text(html_text, encoding="utf-8")
+
+    project = infer_project(root)
+    title = args.title or f"{root.name} AI漫剧生产工作流"
+    output.write_text(render_html(project, title), encoding="utf-8")
     write_opener(output)
     print(f"dashboard: {output}")
 
