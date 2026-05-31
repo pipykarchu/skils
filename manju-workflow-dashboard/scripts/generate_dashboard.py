@@ -225,6 +225,145 @@ def render_demo_steps() -> str:
     )
 
 
+def render_detail_script() -> str:
+    return """<script>
+    const flowDetails = {
+      teaser: {
+        title: "横版预告分镜",
+        summary: "不是直接做正片，而是先用完整故事资产核算成本，拆出最适合面试和平台测试的剪辑先行版。",
+        steps: [
+          "导入故事、纪要和PRD，确认主线、人物称呼和结尾逻辑。",
+          "生成分集剧本，保证完整故事能连续讲完。",
+          "把分集剧本转成分镜脚本，确认每集可画、可剪、可生产。",
+          "核算付费视频成本，判断是否先做全片。",
+          "改为剪辑先行版：重新生成预告剪辑剧本和预告分镜。"
+        ],
+        outputs: ["分集剧本", "分集分镜", "预告剪辑剧本", "预告分镜"]
+      },
+      stills: {
+        title: "横版静帧",
+        summary: "先把视频生产变成可控的图片资产，解决人物、场景、道具和构图统一问题。",
+        steps: [
+          "按预告分镜提取每镜画面主体、景别、动作和字幕重点。",
+          "统一项目视觉风格和年代限制。",
+          "用MJ/Image2/即梦生成16:9横版静帧。",
+          "检查角色、服装、场景、道具是否一致。",
+          "能用静帧讲清楚故事后，再决定哪些镜头值得动态化。"
+        ],
+        outputs: ["shot_XX.png", "角色母版", "道具母版"]
+      },
+      grade: {
+        title: "镜头分级",
+        summary: "核心是省钱：不是所有镜头都跑图生视频，而是按价值分配平台和预算。",
+        steps: [
+          "S级：剧情爆点或记忆点，优先动态图。",
+          "A级：有动态会加分，但静帧动效也能讲清楚。",
+          "B/C级：信息交代、环境、道具、字卡，默认静帧动效。",
+          "低成本平台失败后，才进入Seedance兜底。",
+          "记录平台、失败原因、是否值得继续花钱。"
+        ],
+        outputs: ["S/A/B/C镜头表", "兜底清单", "返工优先级"]
+      },
+      video: {
+        title: "可灵 / 即梦图生视频",
+        summary: "低成本优先处理S/A级镜头，先验证动作成立，再决定是否升质量。",
+        steps: [
+          "用已审核通过的静帧作为首帧或参考图。",
+          "提示词只写关键动作，减少模型自由发挥。",
+          "先跑低清或免费额度版本。",
+          "检查不换脸、不多手、道具不乱、动作可读。",
+          "通过后进入粗剪，不通过则降级或转Seedance。"
+        ],
+        outputs: ["动态图草稿", "可用动态图", "失败原因记录"]
+      },
+      seedance: {
+        title: "Seedance 2 兜底",
+        summary: "付费平台只服务最值得花钱的失败镜头，避免预算失控。",
+        steps: [
+          "只接收低成本平台失败、但剧情价值很高的镜头。",
+          "先跑短时长低成本测试。",
+          "确认动作、脸、道具和氛围后再升质量。",
+          "普通镜头不进入Seedance。",
+          "每次重跑记录成本、失败点和最终是否采用。"
+        ],
+        outputs: ["S级兜底视频", "付费秒数记录", "重跑记录"]
+      },
+      static: {
+        title: "剪映 / FFmpeg静帧动效",
+        summary: "B/C级镜头不用烧钱，用推拉摇移、切黑、字幕和音效形成运动感。",
+        steps: [
+          "把静帧按镜头顺序放入素材目录。",
+          "FFmpeg自动生成慢推、横移、轻缩放等基础动效。",
+          "剪映补字幕、音效、环境声、黑场和节奏点。",
+          "恐怖镜头用短促切换和音效制造惊悚。",
+          "静帧停留太久就缩短时长或加转场。"
+        ],
+        outputs: ["videos_static", "粗剪素材", "字幕音效节奏点"]
+      },
+      edit: {
+        title: "粗剪合成",
+        summary: "把三路素材统一成一个可看的横版母版，先验证故事是否成立。",
+        steps: [
+          "合并图生视频、静帧动效、字卡、字幕、旁白和音效。",
+          "检查前3秒钩子、中段信息、结尾情绪落点。",
+          "关掉画面只听声音，确认故事仍然听得懂。",
+          "关掉声音只看画面，确认关键道具看得清。",
+          "发现问题回到对应节点，不整条链路重做。"
+        ],
+        outputs: ["横版粗剪", "问题清单", "返工节点"]
+      },
+      bili: {
+        title: "平台横版预告",
+        summary: "横版是主母版，负责完整情绪、画面质感和面试展示效果。",
+        steps: [
+          "导出16:9横版母版。",
+          "检查封面、标题、前三秒钩子和结尾记忆点。",
+          "确保字幕不遮脸、不遮关键道具。",
+          "保留题材氛围，同时保证故事能看懂。",
+          "横版通过后再进入竖版裁切。"
+        ],
+        outputs: ["横版MP4", "封面", "标题文案"]
+      },
+      vertical: {
+        title: "裁竖版",
+        summary: "竖版不是重新做一遍，而是从横版母版裁切，并检查安全区。",
+        steps: [
+          "从横版母版裁9:16，优先保人物脸和关键道具。",
+          "必要时重排字幕位置。",
+          "把节奏压得更短，强化开头钩子。",
+          "检查竖版平台安全区和封面可读性。",
+          "导出竖版后与横版一起归档。"
+        ],
+        outputs: ["竖版MP4", "安全区检查", "平台发布包"]
+      }
+    };
+
+    function renderFlowDetail(key) {
+      const detail = flowDetails[key] || flowDetails.teaser;
+      document.getElementById("detailTitle").textContent = detail.title;
+      document.getElementById("detailSummary").textContent = detail.summary;
+      document.getElementById("detailSteps").innerHTML = detail.steps.map(function(step) {
+        return "<li>" + step + "</li>";
+      }).join("");
+      document.getElementById("detailOutputs").innerHTML = detail.outputs.map(function(item) {
+        return "<span>" + item + "</span>";
+      }).join("");
+    }
+
+    document.querySelectorAll(".flow-hit").forEach(function(hit) {
+      hit.addEventListener("click", function() { renderFlowDetail(hit.dataset.detail); });
+      hit.addEventListener("keydown", function(event) {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          renderFlowDetail(hit.dataset.detail);
+        }
+      });
+    });
+
+    renderFlowDetail("teaser");
+  </script>"""
+
+
 def render_file_entry(project: dict[str, object]) -> str:
     root = Path(str(project["root"]))
     entries = [
@@ -324,6 +463,8 @@ def render_html(project: dict[str, object], title: str) -> str:
       border-radius:14px; overflow:auto; box-shadow:inset 0 0 0 1px rgba(255,255,255,.025), 0 16px 40px rgba(0,0,0,.28);
     }}
     .flowchart-svg {{ display:block; min-width:1180px; width:100%; height:auto; }}
+    .flow-hit {{ fill:transparent; cursor:pointer; pointer-events:all; }}
+    .flow-hit:focus {{ outline:none; }}
     .flow-box {{ fill:#17231f; stroke:rgba(132,199,167,.72); stroke-width:2; rx:12; }}
     .flow-box.start {{ stroke:rgba(212,173,95,.85); fill:#211e14; }}
     .flow-box.video {{ stroke:rgba(132,199,167,.82); fill:#14231d; }}
@@ -343,7 +484,7 @@ def render_html(project: dict[str, object], title: str) -> str:
     .flow-label {{ fill:#111611; font-size:13px; font-weight:800; text-anchor:middle; dominant-baseline:middle; }}
     .label-pill {{ fill:var(--gold); rx:12; }}
     details.detail-graph {{
-      margin-top:18px; border:1px solid var(--line); border-radius:12px;
+      display:none; margin-top:18px; border:1px solid var(--line); border-radius:12px;
       background:rgba(7,10,9,.35); overflow:hidden;
     }}
     details.detail-graph > summary {{
@@ -354,6 +495,25 @@ def render_html(project: dict[str, object], title: str) -> str:
       content:"展开"; float:right; color:var(--muted); font-size:12px; font-weight:400;
     }}
     details.detail-graph[open] > summary::after {{ content:"收起"; }}
+    .node-detail {{
+      margin-top:14px; display:grid; grid-template-columns:280px 1fr; gap:14px;
+      border:1px solid rgba(132,199,167,.28); border-radius:12px;
+      background:linear-gradient(180deg,rgba(27,37,33,.96),rgba(16,22,20,.96));
+      box-shadow:0 16px 40px rgba(0,0,0,.28); overflow:hidden;
+    }}
+    .detail-aside {{ padding:16px; border-right:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.03); }}
+    .detail-aside b {{ display:block; color:var(--gold); font-size:15px; margin-bottom:8px; }}
+    .detail-aside p {{ margin:0; color:var(--muted); font-size:12px; }}
+    .detail-body {{ padding:16px; }}
+    .detail-body h3 {{ margin:0 0 8px; font-size:18px; }}
+    .detail-body p {{ margin:0 0 12px; color:var(--muted); font-size:13px; }}
+    .detail-body ol {{ margin:0; padding-left:22px; color:var(--text); }}
+    .detail-body li {{ margin:0 0 7px; font-size:13px; }}
+    .detail-output {{ margin-top:12px; display:flex; flex-wrap:wrap; gap:8px; }}
+    .detail-output span {{
+      padding:4px 8px; border-radius:999px; background:rgba(132,199,167,.12);
+      border:1px solid rgba(132,199,167,.22); color:var(--jade); font-size:12px;
+    }}
     .board {{
       position:relative; height:548px; overflow:auto; border-radius:14px;
       border:1px solid rgba(132,199,167,.2);
@@ -424,6 +584,8 @@ def render_html(project: dict[str, object], title: str) -> str:
       .flow-row {{ flex-direction:column; }}
       .flow-arrow {{ width:100%; min-width:0; min-height:24px; transform:rotate(90deg); }}
       .branch-row {{ grid-template-columns:1fr; }}
+      .node-detail {{ grid-template-columns:1fr; }}
+      .detail-aside {{ border-right:0; border-bottom:1px solid rgba(255,255,255,.08); }}
       .meta-card {{ border-left:0; border-top:1px solid rgba(255,255,255,.08); }}
       .wrap {{ padding:18px 12px 34px; }}
       h1 {{ font-size:27px; }}
@@ -499,7 +661,29 @@ def render_html(project: dict[str, object], title: str) -> str:
         <rect class="flow-box export" x="1160" y="320" width="140" height="82"></rect>
         <text class="flow-text" x="1230" y="350">裁竖版</text>
         <text class="flow-text" x="1230" y="376">发布</text>
+        <rect class="flow-hit" data-detail="teaser" x="20" y="220" width="150" height="82" tabindex="0"><title>查看预告分镜流程</title></rect>
+        <rect class="flow-hit" data-detail="stills" x="245" y="220" width="150" height="82" tabindex="0"><title>查看横版静帧流程</title></rect>
+        <polygon class="flow-hit" data-detail="grade" points="545,194 625,261 545,328 465,261" tabindex="0"><title>查看镜头分级流程</title></polygon>
+        <rect class="flow-hit" data-detail="video" x="730" y="52" width="170" height="82" tabindex="0"><title>查看图生视频流程</title></rect>
+        <rect class="flow-hit" data-detail="seedance" x="730" y="220" width="170" height="82" tabindex="0"><title>查看Seedance兜底流程</title></rect>
+        <rect class="flow-hit" data-detail="static" x="730" y="390" width="170" height="82" tabindex="0"><title>查看静帧动效流程</title></rect>
+        <rect class="flow-hit" data-detail="edit" x="1000" y="220" width="130" height="82" tabindex="0"><title>查看粗剪合成流程</title></rect>
+        <rect class="flow-hit" data-detail="bili" x="1160" y="170" width="140" height="82" tabindex="0"><title>查看横版发布流程</title></rect>
+        <rect class="flow-hit" data-detail="vertical" x="1160" y="320" width="140" height="82" tabindex="0"><title>查看竖版发布流程</title></rect>
       </svg>
+    </section>
+
+    <section class="node-detail" id="nodeDetail" aria-live="polite">
+      <aside class="detail-aside">
+        <b>点击流程图模块查看细节</b>
+        <p>面试时先讲主流程，再按对方追问点击展开对应节点。默认展示第一个节点。</p>
+      </aside>
+      <div class="detail-body">
+        <h3 id="detailTitle">横版预告分镜</h3>
+        <p id="detailSummary">从完整故事资产里拆出最低成本的先行验证版本。</p>
+        <ol id="detailSteps"></ol>
+        <div class="detail-output" id="detailOutputs"></div>
+      </div>
     </section>
 
     <details class="detail-graph">
@@ -551,6 +735,7 @@ def render_html(project: dict[str, object], title: str) -> str:
 
     <div class="footer">{esc(project["name"])} 面试演示工作流看板 · ComfyUI式节点脑图 · 皮玺玉风格 · 本地离线 HTML</div>
   </main>
+  {render_detail_script()}
 </body>
 </html>"""
 

@@ -31,7 +31,8 @@ Default new dashboards to an interview demonstration layout:
 
 - Put project identity and production target in the first screen.
 - Put a large "one-glance" main flow before any complex graph, with Mermaid-like boxes/arrows, for example: `90秒横版预告分镜 -> 24张横版静帧 -> 镜头分级 -> 可灵/即梦/Seedance/FFmpeg -> 粗剪合成 -> 横版 -> 竖版`.
-- Keep the detailed ComfyUI-style graph collapsed by default; it is secondary material for deeper explanation, not the first thing the viewer must parse.
+- Do not rely on a separate detailed node graph as the main explanation. Make the main flow modules clickable; clicking a module should expand that node's detailed workflow below the diagram.
+- For example, clicking `90秒横版预告分镜` should show: story import -> full script -> episode storyboard -> cost estimate -> choose teaser-first strategy -> regenerate teaser script/storyboard.
 - Include an explanation path for how to present the workflow in 3-5 minutes.
 - Show both "what I operate" and "how I verify it": platform confirmation, acceptance criteria, fail conditions, and返工入口.
 - Keep it local/offline so it can open during an interview without network risk.
