@@ -54,6 +54,23 @@ C:\Users\Administrator\.codex\skills\screenplay-director\SKILL.md
 
 README 就是本仓库的本地索引。完整漫剧项目从故事到成片，默认按下面 skill 顺序调度：
 
+| 阶段 | 任务 | 引擎 | 执行方式 |
+|---|---|---|---|
+| 编排 | 目录 / 状态 / 调度 | Codex | 总控 |
+| 1 | PRD | Codex 起草 + Claude 评审 | `prd-writer-agent` |
+| 2 | 生产 SOP | Codex | 总控 |
+| 3 | 角色 + 剧本 | Claude | `screenplay-director` |
+| 3.5 | 角色定妆 | Claude 提示词 + Codex 执行 | `dingzhuangzao` |
+| 3.6 新 | 道具场景定版 | Claude 提示词 + Codex 执行 | `changjingmeishu` |
+| 4 | 分镜 | Codex + Claude 审查 | `script-to-storyboard` |
+| 5 | 生图提示词 | Claude 定一致性 + Codex 格式化 | `storyboard-image-prompts` |
+| 6 | 质检 | Claude | 总控落盘 |
+| 6.5 新 | 人景合一镜头图 | Codex 构建 manifest + Claude 审查 | `renjingheyi` |
+| 7 新 | 视频生成 | Claude 运镜/审查 + Codex 调 API/合成 | 内联（外部生视频 API / FFmpeg / 剪映） |
+| 8 | 流程看板 | Codex | `manju-workflow-dashboard` |
+
+详细顺序：
+
 1. `prd-writer-agent`：项目定义、PRD、验收标准。
 2. `manju-production-workflow`：总控、目录、状态、SOP、阶段调度。
 3. `screenplay-director`：角色档案、分集大纲、剧本。

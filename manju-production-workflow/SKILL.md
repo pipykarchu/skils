@@ -109,6 +109,25 @@ description: Use when the user wants to run an end-to-end 0-1 AI 漫剧 producti
 
 从一个故事想法到可发布成片，按下面顺序推进。每一步只完成自己的交付物，后一步复用前一步成果，不反复重写。
 
+### 阶段总览表
+
+这张表用于快速讲清“谁负责什么、调用哪个 skill”。口径是：Codex 总控和落盘，Claude 负责创作/审查/定调，外部平台只在用户授权后调用。
+
+| 阶段 | 任务 | 引擎 | 执行方式 |
+|---|---|---|---|
+| 编排 | 目录 / 状态 / 调度 | Codex | 总控 |
+| 1 | PRD | Codex 起草 + Claude 评审 | `prd-writer-agent` |
+| 2 | 生产 SOP | Codex | 总控 |
+| 3 | 角色 + 剧本 | Claude | `screenplay-director` |
+| 3.5 | 角色定妆 | Claude 提示词 + Codex 执行 | `dingzhuangzao` |
+| 3.6 新 | 道具场景定版 | Claude 提示词 + Codex 执行 | `changjingmeishu` |
+| 4 | 分镜 | Codex + Claude 审查 | `script-to-storyboard` |
+| 5 | 生图提示词 | Claude 定一致性 + Codex 格式化 | `storyboard-image-prompts` |
+| 6 | 质检 | Claude | 总控落盘 |
+| 6.5 新 | 人景合一镜头图 | Codex 构建 manifest + Claude 审查 | `renjingheyi` |
+| 7 新 | 视频生成 | Claude 运镜/审查 + Codex 调 API/合成 | 内联（外部生视频 API / FFmpeg / 剪映） |
+| 8 | 流程看板 | Codex | `manju-workflow-dashboard` |
+
 | 顺序 | 阶段 | 使用 skill | 主要输入 | 主要输出 | 成功标志 |
 |---|---|---|---|---|---|
 | 1 | 项目定义 | `prd-writer-agent` | 故事想法、目标平台、集数时长、画风 | `00_PRD/*_PRD.md/html` | 题材、受众、风格、验收标准清楚 |
