@@ -31,7 +31,9 @@ C:\Users\Administrator\.codex\skills\screenplay-director\SKILL.md
 | `script-to-storyboard` | 想把剧本、小说片段、Word、PDF、Markdown 或网页内容拆成客观分镜头脚本，并输出可用于 AI 生图的 MD/Excel 分镜表时使用。 | `$script-to-storyboard 根据剧本文件和片段名称“妈妈病了”建立新的 MD 和 Excel 分镜脚本` |
 | `storyboard-image-prompts` | 想根据剧本、世界观、分镜表、角色档案或漫剧短剧分镜生成 AI 绘图提示词，并按人物、场景、世界观规则、连续性和生产平台选择合适模型时使用。 | `$storyboard-image-prompts 根据这份剧本、世界观和分镜表生成绘图提示词，并推荐每镜使用的平台和模型` |
 | `dingzhuangzao` | 想做漫剧角色定妆、角色正面肖像候选、MJ/Image2 两版提示词、网页多选标心、确认造型后三视图高清导出和总览拼图时使用。它会先读取世界观、年代设定、场景和角色资料，服装造型必须贴合项目设定。 | `$dingzhuangzao 读取这个漫剧项目的世界观和角色设定，先给每个角色生成四张正面定妆候选并做网页选择器` |
-| `manju-production-workflow` | 想从 0 到 1 做完整漫剧生产流水线时使用。它会协调 PRD、SOP、角色档案、剧本、分镜、AI 生图提示词和质检；支持 Codex×Claude 按阶段分工（剧本/质检等创作审查类路由给 Claude，机械活留 Codex，Claude 生成内容、Codex 统一落盘）。 | `$manju-production-workflow 启动漫剧项目《重生后我不再忍了》，题材都市复仇，30集，每集60秒` |
+| `changjingmeishu` | 想锁定漫剧场景美术、场地/子场景/关键道具参考图、同一空间不同角度/时段/天气一致性，或生成场景评审网页和 `scene-anchors.json` 时使用。 | `$changjingmeishu 根据这个项目的世界观和分镜，锁定核心场景和关键道具参考图` |
+| `renjingheyi` | 想把已锁定的人物三视图、场景/道具参考图和 `07_绘图提示词` 逐镜融合成最终镜头图，并用网页评审确认镜头图时使用。 | `$renjingheyi 读取第1集提示词、人物三视图和场景定版，逐镜生成人景合一镜头图` |
+| `manju-production-workflow` | 想从 0 到 1 做完整漫剧生产流水线时使用。它会协调 PRD、SOP、剧本、角色定妆、场景美术、分镜、绘图提示词、人景合一镜头图、视频生成、质检和流程看板；支持 Codex×Claude 按阶段分工。 | `$manju-production-workflow 启动漫剧项目《重生后我不再忍了》，题材都市复仇，30集，每集60秒` |
 | `manju-workflow-dashboard` | 想把漫剧生产流程做成面试演示用本地 HTML 网页看板，展示项目信息、ComfyUI式节点脑图、平台选择、操作步骤、成片验收和自检时使用。 | `$manju-workflow-dashboard 给这个漫剧项目生成皮玺玉风格 ComfyUI 节点工作流看板` |
 
 ## 简单判断
@@ -43,7 +45,9 @@ C:\Users\Administrator\.codex\skills\screenplay-director\SKILL.md
 - 要把已有剧本按片段拆成镜号、时长、景别、运镜、画面内容提示词、人物台词和备注，用 `script-to-storyboard`。
 - 要根据剧本、世界观、角色设定和分镜生成绘图提示词，并为不同人物、场景选择 Midjourney、OpenAI Images、Gemini/Imagen、Runway、可灵、即梦、通义万相、混元或 SD/FLUX/ComfyUI，用 `storyboard-image-prompts`。
 - 要做角色定妆照、四张正面候选图、网页标心选择、MJ/Image2 双版本提示词、确认造型后三视图和高清总览，用 `dingzhuangzao`。
-- 要完整跑 PRD、SOP、剧本、分镜、提示词和质检，用 `manju-production-workflow`。
+- 要锁定场景、子场景、关键道具、空间锚点和 `scene-anchors.json`，用 `changjingmeishu`。
+- 要把人物三视图、场景/道具定版和逐镜提示词融合成镜头图，用 `renjingheyi`。
+- 要完整跑 PRD、SOP、剧本、角色定妆、场景美术、分镜、提示词、人景合一、视频生成、质检和流程看板，用 `manju-production-workflow`。
 - 要把漫剧生产流程做成面试演示网页看板、展示项目信息、ComfyUI式节点脑图、平台选择、确认点、验收和自检，用 `manju-workflow-dashboard`。
 
 ## 激活方式
@@ -64,6 +68,14 @@ $storyboard-image-prompts 根据这份世界观、角色设定和分镜表生成
 
 ```text
 $dingzhuangzao 读取项目世界观和角色设定，给主要角色生成定妆候选网页，确认后输出三视图
+```
+
+```text
+$changjingmeishu 根据项目世界观和全量分镜，锁定核心场景、子场景和关键道具
+```
+
+```text
+$renjingheyi 根据第1集绘图提示词、人物三视图和场景定版，生成逐镜融合候选并做网页评审
 ```
 
 ```text
@@ -88,6 +100,8 @@ $manju-production-workflow 启动漫剧项目《重生后我不再忍了》
 - `script-to-storyboard` 支持通过兔子 API 先用 DeepSeek 写分镜初稿，再用 Claude 以导演编剧视角审查画面合理性、时长合理性、对话覆盖和运镜可实现性。
 - `storyboard-image-prompts` 会按任务推荐外部生图平台或模型，例如 Midjourney、OpenAI Images、Gemini/Imagen、Runway、可灵、即梦、通义万相、腾讯混元、Stable Diffusion、FLUX、ComfyUI；真正使用这些平台前，应确认账号授权、额度消耗、素材上传风险和当前模型版本。
 - `dingzhuangzao` 会生成 MJ/Image2 提示词和本地网页选择器；真正调用 Midjourney、Tuzi Image2 或其它生图平台前，应确认账号授权、余额消耗、参考图上传风险和当前模型版本。
+- `changjingmeishu` 会为场景/道具生成参考图提示词和本地评审网页；真正调用生图平台前，应确认账号授权、额度消耗、场景设定上传风险和当前模型版本。
+- `renjingheyi` 会使用多图参考融合人物、场景和道具；真正调用多图生图/编辑接口前，应确认账号授权、额度消耗、人物/场景参考图上传风险和当前模型版本。
 - `manju-production-workflow` 默认只协调本地文件和子 skill；只有用户明确要求外部模型或平台时才调用 API。
 - 调用外部 API 会消耗余额，也会把输入内容发送到第三方服务。
 - `prd-writer-agent` 默认工作环境是 Codex 实现、Claude 评审、Tuzi API 作为产品运行时模型网关；Tuzi 价格页 `https://api.tu-zi.com/pricing` 是默认核验入口。

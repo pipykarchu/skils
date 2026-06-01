@@ -1,6 +1,6 @@
 ---
 name: manju-production-workflow
-description: Use when the user wants to run an end-to-end AI 漫剧 production workflow, coordinate PRD, SOP, character bible, screenplay, character casting/turnaround sheets, storyboard scripts, AI image prompts, LoRA consistency notes, episode folder management, batch exports, and quality checks by invoking prd-writer-agent, screenplay-director, dingzhuangzao, script-to-storyboard, and storyboard-image-prompts in order.
+description: Use when the user wants to run an end-to-end 0-1 AI 漫剧 production workflow, coordinate PRD, SOP, character bible, screenplay, character casting/turnaround sheets, scene art, locked props/locations, storyboard scripts, AI image prompts, 人景合一 shot fusion, video generation, workflow dashboards, batch exports, and quality checks by invoking prd-writer-agent, screenplay-director, dingzhuangzao, changjingmeishu, script-to-storyboard, storyboard-image-prompts, renjingheyi, and manju-workflow-dashboard in order.
 ---
 
 # 漫剧生产工作流总控
@@ -14,8 +14,11 @@ description: Use when the user wants to run an end-to-end AI 漫剧 production w
 - 用 `prd-writer-agent` 定义项目方向和验收标准。
 - 用 `screenplay-director` 写故事、人物、剧本和 Word/Markdown 文件。
 - 用 `dingzhuangzao` 把文字人设转成角色定妆候选、网页选择和确认后的三视图，锁定角色视觉锚点。
+- 用 `changjingmeishu` 把反复出现的场景、子场景和关键道具锁定成参考图与 `scene-anchors.json`。
 - 用 `script-to-storyboard` 拆分镜，生成 Excel/Markdown 分镜脚本，统一放入 `06_分镜表`。
 - 用 `storyboard-image-prompts` 根据剧本、角色设定和分镜脚本生成 AI 生图提示词，统一放入 `07_绘图提示词`，并确保全篇角色、画风、镜头语言一致。
+- 用 `renjingheyi` 读取人物三视图、场景/道具定版和 `07_绘图提示词`，逐镜融合生成最终镜头图。
+- 用 `manju-workflow-dashboard` 把 0-1 流程做成可演示、可复盘、可验收的本地网页看板。
 
 ## 默认规则
 
@@ -35,7 +38,7 @@ description: Use when the user wants to run an end-to-end AI 漫剧 production w
 
 - **Codex 主控**：项目目录创建、`项目状态.md` 维护、阶段调度、所有文件落盘、机械性格式化。
 - **Claude 主跑**：中文剧本创作、人物口吻、戏剧结构（阶段3）；跨集一致性与批判性质检（阶段6）。
-- **协作（Codex 起草 / Claude 把关或定调）**：PRD 评审（阶段1）、角色定妆提示词与跨角色一致性（阶段3.5）、道具/场景定版与一致性（阶段3.6）、分镜导演视角审查（阶段4）、生图提示词的风格与角色一致性（阶段5）、视频运镜/动效提示词与成片节奏审查（阶段7）。
+- **协作（Codex 起草 / Claude 把关或定调）**：PRD 评审（阶段1）、角色定妆提示词与跨角色一致性（阶段3.5）、场景/道具定版与一致性（阶段3.6）、分镜导演视角审查（阶段4）、生图提示词的风格与角色一致性（阶段5）、人景合一融合审查（阶段6.5）、视频运镜/动效提示词与成片节奏审查（阶段7）。
 - **其余**（阶段2 SOP 等流程文档）：Codex 主控。
 
 每个阶段标题下用 `执行引擎：` 注明当前引擎归属。
@@ -101,6 +104,30 @@ description: Use when the user wants to run an end-to-end AI 漫剧 production w
 - 待确认项
 - 下一步
 - 最近一次更新时间
+
+## 0-1 完整工作流与技能路由
+
+从一个故事想法到可发布成片，按下面顺序推进。每一步只完成自己的交付物，后一步复用前一步成果，不反复重写。
+
+| 顺序 | 阶段 | 使用 skill | 主要输入 | 主要输出 | 成功标志 |
+|---|---|---|---|---|---|
+| 1 | 项目定义 | `prd-writer-agent` | 故事想法、目标平台、集数时长、画风 | `00_PRD/*_PRD.md/html` | 题材、受众、风格、验收标准清楚 |
+| 2 | 生产 SOP | `manju-production-workflow` | PRD、项目目录 | `01_生产SOP/*_漫剧生产SOP.md` | 新人能照流程复现 |
+| 3 | 角色与剧本 | `screenplay-director` | PRD、故事文本、人物方向 | `03_角色设定/`、`04_分集大纲/`、`05_剧本/` | 人物稳定、剧本可拆镜 |
+| 4 | 角色定妆 | `dingzhuangzao` | 世界观、角色档案、角色固定提示词 | `03_角色设定/定妆造/` | 角色候选、确认图、三视图齐全 |
+| 5 | 场景美术 | `changjingmeishu` | 世界观、分镜、已锁人物 | `02_世界观/视觉定版/场景|道具/`、`scene-anchors.json` | 场景空间锚点、道具参考已锁 |
+| 6 | 剧本转分镜 | `script-to-storyboard` | 剧本、角色档案 | `06_分镜表/第XX集_分镜脚本.md/xlsx` | 每镜画面、时长、景别、运镜明确 |
+| 7 | 分镜生图提示词 | `storyboard-image-prompts` | 剧本、分镜、角色/场景锚点 | `07_绘图提示词/第XX集_生图提示词.md` | 每镜提示词可批量出图 |
+| 8 | 人景合一镜头图 | `renjingheyi` | 人物三视图、场景/道具定版、`07_绘图提示词` | `10_镜头图/`、`shot-manifest.json`、`selection-state.json` | 每镜有确认镜头图 |
+| 9 | 视频片段与成片 | `manju-production-workflow` 内联执行 | `10_镜头图/`、分镜时长、运镜 | `11_视频片段/`、`12_成片/` | 镜头动起来，字幕/配音/音效合成 |
+| 10 | 质检验收 | `manju-production-workflow` + Claude 审查 | 成片、剧本、分镜、提示词 | `08_成片检查/` | 剧情、角色、道具、预算、安全区通过 |
+| 11 | 流程看板 | `manju-workflow-dashboard` | 项目文件、SOP、成片状态 | `01_生产SOP/workflow_dashboard.html` | 面试/复盘能一眼讲清流程 |
+
+降级规则：
+
+- 没有角色三视图时，不进入 `renjingheyi`，先回到 `dingzhuangzao`。
+- 没有 `scene-anchors.json` 时，不做完整人景合一，先回到 `changjingmeishu`；可临时只用人物参考 + 提示词出图，但场景一致性弱。
+- 预算不足时，阶段9先做静帧动效粗剪，再只给 S 级镜头调用图生视频/Seedance。
 
 ## 阶段流程
 
@@ -256,33 +283,32 @@ SOP 必须包含：
 
 执行引擎：Claude 写道具/场景参考提示词与一致性锚点 + Codex 跑选择器网页、调生图 API、落盘。
 
-目的：把世界观里反复出现的关键道具和核心场景，像角色定妆一样转成视觉参考图，全剧一次锁定，作为后续分镜生图、生视频的场景/道具基准，防止跨镜头穿帮。
+调用 `changjingmeishu`。
 
-说明：当前无专门子 skill。本阶段复用 `dingzhuangzao` 的通用选择器（`casting_gallery_server.py` 是 manifest 驱动的「模块→条目→状态」结构，把「角色」换成「道具/场景」即可直接用），机制内联在本工作流中执行。
+目的：把世界观和分镜里反复出现的场地、子场景、关键道具，像角色定妆一样转成视觉参考图，全剧一次锁定，作为后续人景合一和生视频的环境/道具基准，防止跨镜头穿帮。
 
 输入优先级：
 
 1. `02_世界观/年代设定与场景刻画.md`
-2. `05_剧本/` 中反复出现的关键道具、核心场景清单（由 Claude 从剧本提取）
+2. `06_分镜表/` 全部分镜（反推真实用到的场地、角度、时段、天气组合）
 3. `03_角色设定/定妆造/` 已锁定的角色形象（场景需与角色风格统一）
-
-机制：
-
-- Claude：从世界观+剧本提取「需要锁定的关键道具/场景清单」，为每个写参考图提示词，定跨镜头一致性锚点（材质、年代、光线、色调）。
-- Codex：用通用选择器生成候选→网页选择→保存 `selection-state.json`→确认后导出定版参考图→落盘并验证。
 
 输出到：
 
 ```text
-<项目名>/02_世界观/视觉定版/道具/<道具名>/
-<项目名>/02_世界观/视觉定版/场景/<场景名>/
+<项目名>/02_世界观/视觉定版/manifest.json
+<项目名>/02_世界观/视觉定版/selection-state.json
+<项目名>/02_世界观/视觉定版/scene-anchors.json
+<项目名>/02_世界观/视觉定版/场景/<场地>/<子场景>_<变体>.png
+<项目名>/02_世界观/视觉定版/道具/<道具名>/<道具名>.png
 ```
 
 成功标志：
 
-- 每个关键道具、核心场景都有锁定的参考图和提示词。
-- 道具/场景与已锁定角色形象的画风、年代、光影统一。
-- 阶段4分镜、阶段5生图可直接引用这些定版参考。
+- 每个锁定场景都来自分镜引用，不凭空穷举场景。
+- 同一子场景的不同时段/天气，空间锚点（墙体、门窗、陈设）一致，只变光线/天气。
+- 关键道具、核心场景都有锁定参考图和提示词。
+- `scene-anchors.json` 存在且可被 `renjingheyi` 自动匹配。
 
 ### 阶段 4：剧本转分镜
 
@@ -408,38 +434,66 @@ SOP 必须包含：
 - 提示词是否保持角色一致。
 - 是否存在版权、平台审核或素材泄露风险。
 
+### 阶段 6.5：人景合一镜头图
+
+执行引擎：Codex 构建逐镜 manifest、调多图融合工具、落盘；Claude 参与融合质量审查和问题归因。
+
+调用 `renjingheyi`。
+
+目的：读取已锁定的人物三视图、场景/道具定版参考图和 `07_绘图提示词` 的逐镜主提示词，把人物放进正确场景，逐镜生成最终镜头图，作为阶段7生视频的基准图。
+
+前置依赖：
+
+1. 人物三视图已锁：`03_角色设定/定妆造/` 或 `08_生成图片/角色三视图/`
+2. 场景/道具已锁：`02_世界观/视觉定版/scene-anchors.json`
+3. 分镜提示词已生成：`07_绘图提示词/第XX集_*.md`
+
+输出到：
+
+```text
+<项目名>/10_镜头图/shot-manifest.json
+<项目名>/10_镜头图/selection-state.json
+<项目名>/10_镜头图/candidates/第XX集/<镜号>/*.png
+<项目名>/10_镜头图/final/第XX集/<镜号>.png
+```
+
+成功标志：
+
+- 每个分镜镜号都有 manifest 条目和候选图。
+- `prompt` 字段与 `07_绘图提示词` 原文一致，未被重写。
+- 人物、场景、道具参考图匹配正确，低置信项已人工确认。
+- 确认镜头图符合分镜景别、构图和年代，不换脸、不乱场景。
+
 ### 阶段 7：视频生成
 
 执行引擎：Claude 写运镜/动效提示词、按分镜规划镜头时序、审查成片节奏 + Codex 调生图/生视频 API、批量出图、合成、落盘。
 
-目的：把阶段5的生图提示词和阶段3.5/3.6锁定的角色/道具/场景，转成实际镜头图，再生成视频片段，最终合成单集成片。
+目的：把阶段6.5确认的镜头图转成动态视频片段，最终合成单集或预告成片。
 
-说明：当前无专门子 skill。本阶段机制内联，依赖外部生图/生视频平台（如即梦、可灵、Runway 等），由 Codex 调 API 执行。
+说明：当前无专门视频子 skill。本阶段机制内联，依赖外部生视频平台（如即梦、可灵、Runway、Seedance 等），由 Codex 调 API 或本地 FFmpeg/剪映执行。
 
 流程：
 
-1. **批量出图**（Codex 调生图 API）：按 `07_绘图提示词` 逐镜生成画面，引用已锁定的角色/道具/场景参考图保证一致性。
-2. **生成视频片段**（Codex 调生视频 API）：按分镜的运镜、时长，把镜头图转成动态片段；Claude 负责写运镜/动效提示词。
+1. **镜头分级**：S/A 级用图生视频平台，B/C 级优先用 FFmpeg/剪映静帧动效。
+2. **生成视频片段**：按分镜的运镜、时长，把 `10_镜头图/final/` 转成动态片段；Claude 负责写运镜/动效提示词。
 3. **合成成片**：拼接片段，叠加配音、字幕、音效。
 4. **节奏审查**（Claude）：检查成片节奏、钩子、卡点是否达标。
 
 输出到：
 
 ```text
-<项目名>/10_镜头图/第XX集/
 <项目名>/11_视频片段/第XX集/
 <项目名>/12_成片/第XX集_成片.mp4
 ```
 
 风险提醒（执行前必须说明）：
 
-- 生图/生视频 API 消耗额度通常远高于文本，批量出图前先估算成本并告知用户。
-- 提示词和参考图会上传到第三方平台，有素材泄露风险。
-- 用户明确授权后再调用，未授权只准备提示词和分镜时序，不实际生成。
+- 生视频 API 消耗额度通常远高于文本，批量生成前先估算镜头数×候选数×时长并告知用户。
+- 镜头图和提示词会上传到第三方平台，有素材泄露风险。
+- 用户明确授权后再调用；未授权先用 FFmpeg/剪映静帧动效做粗剪验证。
 
 成功标志：
 
-- 每个镜头有对应画面图，角色/道具/场景与定版一致。
 - 视频片段运镜、时长符合分镜。
 - 成片有配音、字幕，节奏过审查。
 
@@ -474,8 +528,11 @@ $manju-production-workflow 检查第1集剧本、分镜和生图提示词是否�
 - 交给 `prd-writer-agent` 前，提供项目名、题材、目标观众、集数、每集时长、画风、输出格式和成功标准。
 - 交给 `screenplay-director` 前，提供 PRD、角色方向、剧情梗概、目标集数和单集时长。
 - 交给 `dingzhuangzao` 前，提供世界观文件路径、角色档案路径、角色固定提示词路径、目标场景态和 `03_角色设定/定妆造/` 输出目录。
+- 交给 `changjingmeishu` 前，提供世界观文件路径、全量分镜路径、已锁人物目录、目标输出 `02_世界观/视觉定版/`。
 - 交给 `script-to-storyboard` 前，提供剧本文件路径、片段名称、角色档案路径和 `06_分镜表` 输出目录。
 - 交给 `storyboard-image-prompts` 前，提供剧本文件路径、分镜脚本路径、角色档案路径、角色固定提示词路径、前集提示词路径和 `07_绘图提示词` 输出目录。
+- 交给 `renjingheyi` 前，确认人物三视图、`scene-anchors.json`、`07_绘图提示词` 已存在，并提供集数、输出 `10_镜头图/`。
+- 交给 `manju-workflow-dashboard` 前，提供项目根目录、当前成片目标、平台路线和验收自检要求。
 - 子 skill 生成文件后，更新 `项目状态.md`。
 
 ## 路由给 Claude 的交接规则
