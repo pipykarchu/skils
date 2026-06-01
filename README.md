@@ -50,6 +50,27 @@ C:\Users\Administrator\.codex\skills\screenplay-director\SKILL.md
 - 要完整跑 PRD、SOP、剧本、角色定妆、场景美术、分镜、提示词、人景合一、视频生成、质检和流程看板，用 `manju-production-workflow`。
 - 要把漫剧生产流程做成面试演示网页看板、展示项目信息、ComfyUI式节点脑图、平台选择、确认点、验收和自检，用 `manju-workflow-dashboard`。
 
+## 0-1 漫剧工作流索引
+
+README 就是本仓库的本地索引。完整漫剧项目从故事到成片，默认按下面 skill 顺序调度：
+
+1. `prd-writer-agent`：项目定义、PRD、验收标准。
+2. `manju-production-workflow`：总控、目录、状态、SOP、阶段调度。
+3. `screenplay-director`：角色档案、分集大纲、剧本。
+4. `dingzhuangzao`：角色定妆、候选评审、三视图。
+5. `changjingmeishu`：场景美术、关键道具、空间锚点、`scene-anchors.json`。
+6. `script-to-storyboard`：剧本转分镜。
+7. `storyboard-image-prompts`：分镜生图提示词。
+8. `renjingheyi`：人物、场景、道具逐镜融合成镜头图。
+9. `manju-production-workflow`：视频片段、成片合成、质检验收。
+10. `manju-workflow-dashboard`：流程看板、面试演示、复盘。
+
+分工原则：
+
+- Codex 负责总控、文件落盘、路径验证、脚本、manifest、网页、自动化和推送。
+- Claude 负责创作、口吻、戏剧结构、角色/场景一致性、导演视角审查和成片节奏判断。
+- Claude 只返回内容和审查意见；Codex 统一写文件并验证真实落盘。
+
 ## 激活方式
 
 Codex 会根据你的需求自动判断是否使用 skill。也可以手动指定：
