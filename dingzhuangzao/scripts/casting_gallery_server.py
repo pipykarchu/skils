@@ -57,10 +57,10 @@ header{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-
 header .title{display:flex;align-items:baseline;gap:12px}
 header h1{margin:0;font-size:18px;letter-spacing:.5px}
 header .proj{font-size:13px;color:var(--muted)}
-header .center-tools{display:flex;align-items:center;gap:12px;min-width:360px;justify-content:center}
+header .center-tools{display:flex;align-items:center;gap:12px;min-width:240px;justify-content:center}
 header .progress{font-size:13px;color:var(--muted);white-space:nowrap}
 header .progress b{color:var(--accent)}
-header .head-right{display:flex;align-items:center;gap:10px}
+header .head-right{display:flex;align-items:center;gap:12px}
 .mode-tabs{display:inline-flex;align-items:center;padding:3px;border:1px solid var(--line);border-radius:9px;background:var(--panel);box-shadow:var(--shadow)}
 .mode-tab{height:30px;padding:0 14px;border:0;border-radius:7px;background:transparent;color:var(--muted);font:inherit;font-size:13px;cursor:pointer}
 .mode-tab:hover{color:var(--ink);background:var(--nav-hover)}
@@ -79,7 +79,7 @@ header .head-right{display:flex;align-items:center;gap:10px}
 @media(max-width:1180px){.layout{grid-template-columns:240px 1fr}.aside-right{display:none}}
 @media(max-width:860px){
   header{flex-wrap:wrap}
-  header .center-tools{order:3;width:100%;min-width:0;justify-content:space-between}
+  header .center-tools{order:3;width:100%;min-width:0;justify-content:center}
 }
 
 /* ---- 左栏：角色导航 ---- */
@@ -217,9 +217,9 @@ header .head-right{display:flex;align-items:center;gap:10px}
       <button class="mode-tab active" data-mode="casting">定妆造</button>
       <button class="mode-tab" data-mode="scene">场景美术</button>
     </div>
-    <div class="progress" id="progress"></div>
   </div>
   <div class="head-right">
+    <div class="progress" id="progress"></div>
     <button class="theme-toggle" id="themeToggle" title="切换深色/浅色">🌙</button>
     <button class="btn primary" id="saveBtn">保存选择</button>
   </div>
