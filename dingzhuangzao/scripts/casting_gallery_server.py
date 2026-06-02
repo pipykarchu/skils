@@ -138,7 +138,7 @@ header .head-right{display:flex;align-items:center;gap:10px}
 [data-theme="dark"] .heart{background:rgba(20,22,26,.85);color:#6a7079}
 .heart:hover{transform:scale(1.1)}
 .card.liked .heart{color:var(--heart)}
-.locks{position:absolute;top:8px;left:8px;z-index:4;display:flex;gap:5px}
+.locks{position:absolute;top:8px;left:8px;right:42px;z-index:4;display:flex;gap:5px;flex-wrap:wrap}
 .lockbtn{height:26px;min-width:30px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.92);
   color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.12)}
 [data-theme="dark"] .lockbtn{background:rgba(20,22,26,.86)}
@@ -438,6 +438,36 @@ function onConfirm(role, st, k){
   PICK_FINAL = k; renderStage(); toast("有多张心仪图，请点选其中一张作为最终");
 }
 
+function lockOptionsForRole(roleName){
+  const modName = findModuleName(roleName);
+  if(modName.includes("场景美术") || modName.includes("道具定版") || modName.includes("关键道具")){
+    return [
+      {kind:"atmosphere", label:"氛围", title:"锁氛围气质"},
+      {kind:"color", label:"色调", title:"锁色调与光影"},
+      {kind:"composition", label:"构图", title:"锁镜头构图"},
+      {kind:"architecture", label:"建筑", title:"锁建筑/空间结构"}
+    ];
+  }
+  return [
+    {kind:"face", label:"脸", title:"锁脸"},
+    {kind:"body", label:"身体", title:"锁身体比例和姿态"},
+    {kind:"clothes", label:"衣服", title:"锁衣服材质和配饰"},
+    {kind:"hair", label:"发型", title:"锁发型和发量"}
+  ];
+}
+
+function lockLabel(kind){
+  const all = [
+    ...lockOptionsForRole("__default__"),
+    {kind:"atmosphere", label:"氛围"},
+    {kind:"color", label:"色调"},
+    {kind:"composition", label:"构图"},
+    {kind:"architecture", label:"建筑"}
+  ];
+  const hit = all.find(x=>x.kind===kind);
+  return hit ? hit.label : kind;
+}
+
 function cardHtml(role, st, group, img){
   const id = img.id || img.path;
   const liked = !!STATE.likes[id];
@@ -449,12 +479,11 @@ function cardHtml(role, st, group, img){
   const inner = img.path
     ? `<img src="/asset/${encodeURI(img.path)}" alt="${esc(id)}" loading="lazy">`
     : `<div class="ph">占位<br>${esc(img.note||id)}</div>`;
+  const lockButtons = lockOptionsForRole(role.name).map(opt =>
+    `<button class="lockbtn ${locks[opt.kind]===id?'active':''}" data-kind="${esc(opt.kind)}" data-id="${esc(id)}" title="${esc(opt.title)}">${esc(opt.label)}</button>`
+  ).join("");
   return `<article class="card ${liked?'liked':''} ${isFinal?'final':''} ${pickable?'pickable':''}" data-id="${esc(id)}">
-    <div class="locks">
-      <button class="lockbtn ${locks.face===id?'active':''}" data-kind="face" data-id="${esc(id)}" title="锁脸">脸</button>
-      <button class="lockbtn ${locks.body===id?'active':''}" data-kind="body" data-id="${esc(id)}" title="锁身体比例和姿态">身体</button>
-      <button class="lockbtn ${locks.clothes===id?'active':''}" data-kind="clothes" data-id="${esc(id)}" title="锁衣服材质和配饰">衣服</button>
-    </div>
+    <div class="locks">${lockButtons}</div>
     <button class="heart" data-id="${esc(id)}" title="心仪">${liked?'❤':'♡'}</button>
     <div class="imgwrap">${inner}</div>
     <div class="meta"><span>${esc(id)}</span><span class="finaltag">最终</span></div>
@@ -470,7 +499,7 @@ function toggleLock(k, kind, id){
   else STATE.locks[k][kind] = id;
   if(Object.keys(STATE.locks[k]).length===0) delete STATE.locks[k];
   autosave();
-  const label = kind==="face" ? "脸" : (kind==="body" ? "身体" : "衣服");
+  const label = lockLabel(kind);
   toast(current === id ? `已取消锁${label}` : `已锁${label}参考`);
 }
 

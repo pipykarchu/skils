@@ -94,7 +94,10 @@ Use this JSON shape (see SKILL.md → Manifest Schema for the full field list):
   "project": "娃娃仙",
   "likes": {"<image-id>": true},
   "finals": {"<角色>::<时期>": "<被选为最终的单张 image-id>"},
-  "locks": {"<角色>::<时期>": {"face": "<image-id>", "body": "<image-id>", "clothes": "<image-id>"}},
+  "locks": {"<角色>::<时期>": {
+    "face": "<image-id>", "body": "<image-id>", "clothes": "<image-id>", "hair": "<image-id>",
+    "atmosphere": "<image-id>", "color": "<image-id>", "composition": "<image-id>", "architecture": "<image-id>"
+  }},
   "notes": {"<角色>::<时期>": {"likes": "...", "adjustments": "...", "nextRound": true, "nextEngine": "Gemini Image"}},
   "gen": {"<角色>::<时期>::<引擎>": true},
   "overviewRequested": true,
@@ -104,14 +107,14 @@ Use this JSON shape (see SKILL.md → Manifest Schema for the full field list):
      "era": "童年段 · 1988年前后", "styleTone": "...",
      "final": {"engine": "Image2", "id": "...", "path": "candidates/.../02.png"},
      "alternates": [{"engine": "MJ", "id": "...", "path": "..."}],
-     "locks": {"face": "...", "body": "...", "clothes": "..."}}
+     "locks": {"face": "...", "body": "...", "clothes": "...", "hair": "..."}}
   ],
   "genRequests": [{"role": "娃娃仙姐姐", "state": "对抗鬼物期", "engine": "MJ"}]
 }
 ```
 
 - `finals[<角色>::<时期>]` 是**单张** image-id（确认造型只能选一张）。`confirmedLooks[].final` 是它的完整引用，`alternates` 是同时期其它 ❤️ 心仪图。
-- `locks[<角色>::<时期>]` 可分别锁脸、身体比例/姿态、衣服材质/配饰；后续三视图和人景合一要优先读取这些局部参考。
+- `locks[<角色>::<时期>]` 是下一版生成的倾向参考。人物定妆可锁 `face/body/clothes/hair`（脸/身体/衣服/发型）；场景美术/道具可锁 `atmosphere/color/composition/architecture`（氛围/色调/构图/建筑）。后续三视图、人景合一和下一版补图要优先读取这些局部参考。
 - `genRequests` 是空行点击记录的「需生成」意图（角色×时期×引擎）。服务器无出图能力，agent 读到后去出图。
 - 导入图存在 `candidates/<角色>/<时期>/导入/round-01/`，在网页作为「导入」行显示在 Gemini/Image2 上方。
 - `confirmedLooks` is the agent's hand-off for turnaround + overview generation: each confirmed period's single final + alternates + locks. Only act on `生成总览图` when `overviewRequested` is true and `confirmedCount === totalStates`.

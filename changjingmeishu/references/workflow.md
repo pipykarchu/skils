@@ -105,7 +105,7 @@ WEATHER_HINTS = {"晴":["晴","烈日","阳光"], "阴":["阴","乌云"], "雨":
 
 ## Selection State
 
-`casting_gallery_server.py` 的 `POST /api/save` 写 `selection-state.json`，结构与定妆造一致（`likes/locks/finals/notes/confirmedLooks/genRequests/overviewRequested`）。`confirmedLooks` 里每个已确认变体的 `final`、`alternates` 和 `locks` 就是该场景/道具的锁定参考。
+`casting_gallery_server.py` 的 `POST /api/save` 写 `selection-state.json`，结构与定妆造一致（`likes/locks/finals/notes/confirmedLooks/genRequests/overviewRequested`）。场景/道具模块的 `locks` 使用 `atmosphere/color/composition/architecture` 分别表示氛围、色调、构图、建筑/空间结构倾向；`confirmedLooks` 里每个已确认变体的 `final`、`alternates` 和 `locks` 就是该场景/道具的锁定参考。
 
 ## scene-anchors.json（给人景合一）
 

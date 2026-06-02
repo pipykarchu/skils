@@ -66,7 +66,7 @@ Do not rely only on the style name. Always include concrete visual features from
    - **Right pane**: the worldview/scene background for that period (era, scene, space, props, costume, light, forbidden items, keyword tags) plus copyable Gemini/Image2/MJ prompt blocks — read from `state.worldview` and `state.prompts`.
    - **Heart vs confirm are separate**: clicking an image (or its top-right ❤️) toggles a 心仪 like (multi-select). `确认此时期造型` marks the whole period final; in a confirmed period the liked images become its final reference images. Confirming with zero hearts warns the user.
    - **Bottom bar**: `生成总览图` stays disabled until every period is confirmed. It does **not** draw anything — it records the intent (`overviewRequested:true`) plus `confirmedLooks` into the saved JSON, so the agent generates the overview in the next step.
-   - Every image card can additionally lock partial references: `脸` / `身体` / `衣服`. These locks are saved into `selection-state.json` and carried in `confirmedLooks[].locks` for later 三视图、场景融合、人景合一.
+   - Every image card can additionally lock partial references. 人物定妆 modules show `脸` / `身体` / `衣服` / `发型`; 场景美术/道具 modules show `氛围` / `色调` / `构图` / `建筑`. These locks are saved into `selection-state.json` and carried in `confirmedLooks[].locks` for later 下一版生成、三视图、场景融合、人景合一.
    - `保存选择`: write `selection-state.json` (likes, locks, finals, notes, confirmedLooks, genRequests, overviewRequested) to the project.
 
 5. **Generate final turnarounds**
@@ -131,7 +131,7 @@ The gallery must support:
 - Empty Gemini/Image2/MJ rows are clickable to record a **generate intent** (`STATE.gen`, persisted as `genRequests`); the server has no image API, so this only records intent for the agent to act on
 - Right: per-period tone card (top) → worldview/scene panel → 定妆提示词 block (Gemini/Image2/MJ with copy buttons)
 - ❤️ like (multi-select) distinct from `确认此时期造型`; **confirm is single-select** — `finals[period]` stores one image id (0 likes → prompt; 1 like → auto-final; multiple → pick-one mode)
-- `脸` / `身体` / `衣服` lock buttons are independent from ❤️ and final confirmation. Use them when one candidate has the right face but another candidate has better body proportion or costume texture.
+- Lock buttons are independent from ❤️ and final confirmation. 人物模块：`脸` / `身体` / `衣服` / `发型`; 场景/道具模块：`氛围` / `色调` / `构图` / `建筑`. Use them when one candidate has the right face but another candidate has better body proportion/costume, or when one scene candidate has better mood but another has better composition/building structure.
 - Key actions (❤️ / 进入下一版 / 确认此造型 / 导入 / 生成意图) **auto-save** to `selection-state.json`; the `保存选择` button is a manual fallback
 - Dark/light theme toggle (🌙/☀ in header), persisted to localStorage, defaults to system `prefers-color-scheme`
 - Saved JSON (`selection-state.json`) with `confirmedLooks` (each with a single `final` + `alternates` + `locks`) and `genRequests` the agent reads next
