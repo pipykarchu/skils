@@ -132,6 +132,7 @@ The gallery must support:
 - Right: per-period tone card (top) → worldview/scene panel → 定妆提示词 block (Gemini/Image2/MJ with copy buttons)
 - ❤️ like (multi-select) distinct from `确认此时期造型`; **confirm is single-select** — `finals[period]` stores one image id (0 likes → prompt; 1 like → auto-final; multiple → pick-one mode)
 - Lock buttons are independent from ❤️ and final confirmation. 人物模块：`脸` / `身体` / `衣服` / `发型`; 场景/道具模块：`氛围` / `色调` / `构图` / `建筑`. Use them when one candidate has the right face but another candidate has better body proportion/costume, or when one scene candidate has better mood but another has better composition/building structure.
+- Left navigation bottom: include a collapsible `平台 Key` panel for Nano Banana Pro / Seedream 5 / Midjourney / Image2 / 可灵 / 即梦 / Seedance. Values are stored only in the current browser `localStorage` (`visualReviewProviderKeys`) and must never be written to `selection-state.json`, project files, skill files, or Git.
 - Key actions (❤️ / 进入下一版 / 确认此造型 / 导入 / 生成意图) **auto-save** to `selection-state.json`; the `保存选择` button is a manual fallback
 - Dark/light theme toggle (🌙/☀ in header), persisted to localStorage, defaults to system `prefers-color-scheme`
 - Saved JSON (`selection-state.json`) with `confirmedLooks` (each with a single `final` + `alternates` + `locks`) and `genRequests` the agent reads next

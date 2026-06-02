@@ -105,6 +105,17 @@ header .head-right{display:flex;align-items:center;gap:12px}
 .state-link.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
 .state-link .tick{font-size:12px;color:var(--accent);opacity:0}
 .state-link.confirmed .tick{opacity:1}
+.key-panel{margin:18px 2px 0;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel);box-shadow:var(--shadow)}
+.key-toggle{width:100%;height:30px;border:0;background:transparent;color:var(--ink);display:flex;align-items:center;justify-content:space-between;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.key-body{display:none;margin-top:8px}
+.key-panel.open .key-body{display:block}
+.key-panel.open .caret{transform:rotate(90deg)}
+.key-note{font-size:11px;line-height:1.5;color:var(--muted);margin-bottom:8px}
+.key-grid{display:grid;gap:7px}
+.key-field label{display:block;font-size:11px;color:var(--muted);margin-bottom:3px}
+.key-field input{width:100%;height:30px;border:1px solid var(--line);border-radius:7px;background:var(--slot-bg);color:var(--ink);padding:0 8px;font:inherit;font-size:12px}
+.key-actions{display:flex;gap:7px;margin-top:9px}
+.key-actions .btn{height:30px;padding:0 10px;font-size:12px}
 
 /* ---- 中栏：候选评审 ---- */
 .stage{overflow:auto;padding:22px 26px 90px;position:relative}
@@ -317,7 +328,7 @@ function confirmedCount(mode=ACTIVE_MODE){
 function renderNav(){
   const nav = document.getElementById("nav");
   const mods = (MANIFEST.modules || [{name:"", roles:MANIFEST.roles||[]}]).filter(mod=>moduleMatchesMode(mod, ACTIVE_MODE));
-  nav.innerHTML = mods.map(mod=>{
+  const moduleHtml = mods.map(mod=>{
     const roles = (mod.roles||[]).map(role=>{
       const open = role.name===CUR.role;
       const hasConfirm = (role.states||[]).some(s=>STATE.finals[keyOf(role.name,s.name)]);
@@ -341,6 +352,7 @@ function renderNav(){
     const title = mod.name ? `<div class="module-title">${esc(mod.name)}</div>` : "";
     return `<div class="module">${title}${roles}</div>`;
   }).join("");
+  nav.innerHTML = moduleHtml + keyPanelHtml();
 
   nav.querySelectorAll(".role-toggle").forEach(b=>b.onclick=()=>{
     const r = b.dataset.role;
@@ -355,6 +367,63 @@ function renderNav(){
     CUR.role = b.dataset.role; CUR.state = b.dataset.state;
     renderNav(); renderStage(); renderAside();
   });
+  bindKeyPanel(nav);
+}
+
+const KEY_STORE = "visualReviewProviderKeys";
+const KEY_FIELDS = [
+  ["nanoBananaPro", "Nano Banana Pro"],
+  ["seedream5", "Seedream 5"],
+  ["midjourney", "Midjourney"],
+  ["image2", "Image2 / Tuzi"],
+  ["kling", "可灵"],
+  ["jimeng", "即梦"],
+  ["seedance", "Seedance"]
+];
+function loadProviderKeys(){
+  try{ return JSON.parse(localStorage.getItem(KEY_STORE)) || {}; }
+  catch(e){ return {}; }
+}
+function saveProviderKeys(keys){ localStorage.setItem(KEY_STORE, JSON.stringify(keys)); }
+function keyPanelHtml(){
+  const keys = loadProviderKeys();
+  const open = localStorage.getItem("visualReviewKeyPanelOpen")==="1";
+  const fields = KEY_FIELDS.map(([id,label])=>`
+    <div class="key-field">
+      <label>${esc(label)}</label>
+      <input type="password" data-key-id="${esc(id)}" value="${esc(keys[id]||"")}" autocomplete="off" placeholder="粘贴 ${esc(label)} Key">
+    </div>`).join("");
+  return `<section class="key-panel ${open?'open':''}" id="keyPanel">
+    <button class="key-toggle" type="button"><span>平台 Key</span><span class="caret">▶</span></button>
+    <div class="key-body">
+      <div class="key-note">仅保存在本浏览器 localStorage，不写入项目文件；清缓存或换浏览器后需重填。</div>
+      <div class="key-grid">${fields}</div>
+      <div class="key-actions">
+        <button class="btn primary" id="saveKeysBtn" type="button">保存Key</button>
+        <button class="btn" id="clearKeysBtn" type="button">清空</button>
+      </div>
+    </div>
+  </section>`;
+}
+function bindKeyPanel(nav){
+  const panel = nav.querySelector("#keyPanel");
+  if(!panel) return;
+  const toggle = panel.querySelector(".key-toggle");
+  toggle.onclick=()=>{
+    panel.classList.toggle("open");
+    localStorage.setItem("visualReviewKeyPanelOpen", panel.classList.contains("open") ? "1" : "0");
+  };
+  panel.querySelector("#saveKeysBtn").onclick=()=>{
+    const keys = {};
+    panel.querySelectorAll("input[data-key-id]").forEach(input=>{ keys[input.dataset.keyId] = input.value.trim(); });
+    saveProviderKeys(keys);
+    toast("平台 Key 已保存到本浏览器");
+  };
+  panel.querySelector("#clearKeysBtn").onclick=()=>{
+    localStorage.removeItem(KEY_STORE);
+    panel.querySelectorAll("input[data-key-id]").forEach(input=>input.value="");
+    toast("已清空本浏览器保存的 Key");
+  };
 }
 
 /* ---------- 中栏 ---------- */
