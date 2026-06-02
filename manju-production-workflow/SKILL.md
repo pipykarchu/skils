@@ -13,8 +13,8 @@ description: Use when the user wants to run an end-to-end 0-1 AI 漫剧 producti
 
 - 用 `prd-writer-agent` 定义项目方向和验收标准。
 - 用 `screenplay-director` 写故事、人物、剧本和 Word/Markdown 文件。
-- 用 `dingzhuangzao` 把文字人设转成角色定妆候选、网页选择和确认后的三视图，锁定角色视觉锚点。
-- 用 `changjingmeishu` 把反复出现的场景、子场景和关键道具锁定成参考图与 `scene-anchors.json`。
+- 用 `dingzhuangzao` 把文字人设转成角色定妆候选、统一网页选择和确认后的三视图，锁定角色视觉锚点。
+- 用 `changjingmeishu` 把反复出现的场景、子场景和关键道具锁定成参考图与 `scene-anchors.json`；默认与定妆造共用同一个 `视觉定版评审` 网页。
 - 用 `script-to-storyboard` 拆分镜，生成 Excel/Markdown 分镜脚本，统一放入 `06_分镜表`。
 - 用 `storyboard-image-prompts` 根据剧本、角色设定和分镜脚本生成 AI 生图提示词，统一放入 `07_绘图提示词`，并确保全篇角色、画风、镜头语言一致。
 - 用 `renjingheyi` 读取人物三视图、场景/道具定版和 `07_绘图提示词`，逐镜融合生成最终镜头图。
@@ -83,6 +83,8 @@ description: Use when the user wants to run an end-to-end 0-1 AI 漫剧 producti
   05_剧本/
   06_分镜表/
   07_绘图提示词/
+  08_生成图片/
+    视觉定版评审/        # 人物定妆 + 场景/道具同页评审
   08_成片检查/
   09_素材与参考/
   10_镜头图/
@@ -119,8 +121,8 @@ description: Use when the user wants to run an end-to-end 0-1 AI 漫剧 producti
 | 1 | PRD | Codex 起草 + Claude 评审 | `prd-writer-agent` |
 | 2 | 生产 SOP | Codex | 总控 |
 | 3 | 角色 + 剧本 | Claude | `screenplay-director` |
-| 3.5 | 角色定妆 | Claude 提示词 + Codex 执行 | `dingzhuangzao` |
-| 3.6 新 | 道具场景定版 | Claude 提示词 + Codex 执行 | `changjingmeishu` |
+| 3.5 | 角色定妆 | Claude 提示词 + Codex 执行 | `dingzhuangzao`，写入统一 `视觉定版评审` |
+| 3.6 新 | 道具场景定版 | Claude 提示词 + Codex 执行 | `changjingmeishu`，并入统一 `视觉定版评审` |
 | 4 | 分镜 | Codex + Claude 审查 | `script-to-storyboard` |
 | 5 | 生图提示词 | Claude 定一致性 + Codex 格式化 | `storyboard-image-prompts` |
 | 6 | 质检 | Claude | 总控落盘 |
@@ -133,8 +135,8 @@ description: Use when the user wants to run an end-to-end 0-1 AI 漫剧 producti
 | 1 | 项目定义 | `prd-writer-agent` | 故事想法、目标平台、集数时长、画风 | `00_PRD/*_PRD.md/html` | 题材、受众、风格、验收标准清楚 |
 | 2 | 生产 SOP | `manju-production-workflow` | PRD、项目目录 | `01_生产SOP/*_漫剧生产SOP.md` | 新人能照流程复现 |
 | 3 | 角色与剧本 | `screenplay-director` | PRD、故事文本、人物方向 | `03_角色设定/`、`04_分集大纲/`、`05_剧本/` | 人物稳定、剧本可拆镜 |
-| 4 | 角色定妆 | `dingzhuangzao` | 世界观、角色档案、角色固定提示词 | `03_角色设定/定妆造/` | 角色候选、确认图、三视图齐全 |
-| 5 | 场景美术 | `changjingmeishu` | 世界观、分镜、已锁人物 | `02_世界观/视觉定版/场景|道具/`、`scene-anchors.json` | 场景空间锚点、道具参考已锁 |
+| 4 | 角色定妆 | `dingzhuangzao` | 世界观、角色档案、角色固定提示词 | `08_生成图片/视觉定版评审/`、`03_角色设定/定妆造/` | 角色候选、确认图、三视图齐全 |
+| 5 | 场景美术 | `changjingmeishu` | 世界观、分镜、已锁人物 | `08_生成图片/视觉定版评审/`、`02_世界观/视觉定版/场景|道具/`、`scene-anchors.json` | 场景空间锚点、道具参考已锁 |
 | 6 | 剧本转分镜 | `script-to-storyboard` | 剧本、角色档案 | `06_分镜表/第XX集_分镜脚本.md/xlsx` | 每镜画面、时长、景别、运镜明确 |
 | 7 | 分镜生图提示词 | `storyboard-image-prompts` | 剧本、分镜、角色/场景锚点 | `07_绘图提示词/第XX集_生图提示词.md` | 每镜提示词可批量出图 |
 | 8 | 人景合一镜头图 | `renjingheyi` | 人物三视图、场景/道具定版、`07_绘图提示词` | `10_镜头图/`、`shot-manifest.json`、`selection-state.json` | 每镜有确认镜头图 |
@@ -280,21 +282,23 @@ SOP 必须包含：
 输出到：
 
 ```text
-<项目名>/03_角色设定/定妆造/<角色>/  # 候选图、selection-state.json、提示词历史
+<项目名>/08_生成图片/视觉定版评审/manifest.json
+<项目名>/08_生成图片/视觉定版评审/selection-state.json
+<项目名>/08_生成图片/视觉定版评审/candidates/人物/<角色>/<时期>/
 <项目名>/03_角色设定/定妆造/<角色>/三视图/  # 确认造型后的正/侧/背三视图
 ```
 
-> 注意：dingzhuangzao 默认输出到 `08_生成图片/定妆造/`，与主工作流目录的 `08_成片检查` 编号冲突。本工作流内统一改放到 `03_角色设定/定妆造/`，紧挨角色档案，避免编号打架。
+> 注意：正式生产默认打开一个 `08_生成图片/视觉定版评审/` 网页，人物定妆、场景美术、道具定版都并入同一 manifest。`03_角色设定/定妆造/` 只放最终角色资产和三视图。
 
 引擎分工细则：
 
 - Claude：读世界观+角色档案 → 写 MJ版/Image2版造型提示词、定四张候选的受控变化范围、定跨角色与跨场景态的一致性锚点。
-- Codex：跑 `casting_gallery_server.py` 选择器网页、（用户授权后）调生图 API、保存 `selection-state.json`、确认后生成三视图、导出资产、落盘并验证。
+- Codex：跑统一 `casting_gallery_server.py` 视觉定版评审网页、（用户授权后）调生图 API、保存 `selection-state.json`、确认后生成三视图、导出资产、落盘并验证。
 
 成功标志：
 
 - 每个角色每个场景态都有定妆候选和保存的提示词历史。
-- 用户在网页选定并确认造型，`selection-state.json` 存在且可读。
+- 用户在统一网页选定并确认造型，`selection-state.json` 存在且可读。
 - 确认造型有正/侧/背全身三视图，服装五官一致。
 - 造型贴合 `年代设定与场景刻画.md`，无文字水印。
 
@@ -315,6 +319,10 @@ SOP 必须包含：
 输出到：
 
 ```text
+<项目名>/08_生成图片/视觉定版评审/manifest.json        # 与人物定妆同页
+<项目名>/08_生成图片/视觉定版评审/selection-state.json
+<项目名>/08_生成图片/视觉定版评审/candidates/场景/
+<项目名>/08_生成图片/视觉定版评审/candidates/道具/
 <项目名>/02_世界观/视觉定版/manifest.json
 <项目名>/02_世界观/视觉定版/selection-state.json
 <项目名>/02_世界观/视觉定版/scene-anchors.json
@@ -325,6 +333,7 @@ SOP 必须包含：
 成功标志：
 
 - 每个锁定场景都来自分镜引用，不凭空穷举场景。
+- 场景/道具模块已并入同一个 `视觉定版评审` 网页；如果只做只读面试演示可静态打开，正式审核需本地 localhost server 保存状态。
 - 同一子场景的不同时段/天气，空间锚点（墙体、门窗、陈设）一致，只变光线/天气。
 - 关键道具、核心场景都有锁定参考图和提示词。
 - `scene-anchors.json` 存在且可被 `renjingheyi` 自动匹配。

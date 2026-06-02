@@ -3,6 +3,15 @@
 ## 文件夹模式
 
 ```text
+08_生成图片/视觉定版评审/        # 推荐：人物定妆 + 场景/道具同页评审
+  manifest.json                  # 人物模块 + 场景模块 + 道具模块合并
+  casting_gallery_server.py      # 从 dingzhuangzao 拷入
+  selection-state.json           # 网页保存的统一锁定状态
+  candidates/
+    人物/<角色>/<时期>/<engine>/round-XX/*.png
+    场景/<场地>/<子场景>/<变体>/<engine>/round-XX/*.png
+    道具/<道具名>/<变体>/<engine>/round-XX/*.png
+
 02_世界观/视觉定版/
   build_scene_manifest.py        # 读分镜+世界观，生成 manifest.json
   manifest.json                  # 驱动评审网页（casting 兼容）
@@ -17,6 +26,8 @@
   道具/
     <道具名>/<道具名>.png         # 锁定的道具定版
 ```
+
+统一评审页需要一个轻量本地 Python server，负责导入图、读取本地图片、热更新 manifest、保存 `selection-state.json`。它不调生图 API、不上传素材；纯静态 HTML 只适合只读演示，不适合正式确认。
 
 ## 分镜驱动提取算法（防组合爆炸）
 
@@ -44,7 +55,7 @@ WEATHER_HINTS = {"晴":["晴","烈日","阳光"], "阴":["阴","乌云"], "雨":
 
 ## Manifest Schema（casting 兼容）
 
-直接喂给 `dingzhuangzao/casting_gallery_server.py`，复用其「模块→条目→变体→候选」结构。语义重映射如下：
+直接喂给 `dingzhuangzao/casting_gallery_server.py`，或合并进 `08_生成图片/视觉定版评审/manifest.json`，复用其「模块→条目→变体→候选」结构。语义重映射如下：
 
 ```json
 {
@@ -72,6 +83,7 @@ WEATHER_HINTS = {"晴":["晴","烈日","阳光"], "阴":["阴","乌云"], "雨":
                 "keywords": ["旧木床", "床头柜", "暖暗光", "镜号01/03/08"]
               },
               "groups": [
+                {"engine": "Gemini Image", "label": "场景概念图（下一版/图生图）", "images": []},
                 {"engine": "Image2", "label": "场景概念图（整句约束）", "images": [
                   {"id": "aniJia-西屋-夜-01", "path": "", "note": "Image2 候选1"}
                 ]},
@@ -93,7 +105,7 @@ WEATHER_HINTS = {"晴":["晴","烈日","阳光"], "阴":["阴","乌云"], "雨":
 
 ## Selection State
 
-`casting_gallery_server.py` 的 `POST /api/save` 写 `selection-state.json`，结构与定妆造一致（`likes/finals/notes/confirmedLooks/overviewRequested`）。`confirmedLooks` 里每个已确认变体的 refs 就是该场景的锁定参考图。
+`casting_gallery_server.py` 的 `POST /api/save` 写 `selection-state.json`，结构与定妆造一致（`likes/locks/finals/notes/confirmedLooks/genRequests/overviewRequested`）。`confirmedLooks` 里每个已确认变体的 `final`、`alternates` 和 `locks` 就是该场景/道具的锁定参考。
 
 ## scene-anchors.json（给人景合一）
 

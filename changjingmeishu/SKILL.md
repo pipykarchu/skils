@@ -28,6 +28,7 @@ description: Lock reusable scene/location and key-prop reference art for Chinese
 2. **空间锚点固定，只变光线/天气/时段（防穿帮）**。同一个西屋卧室，白天和夜晚必须是同一个空间——墙体、门窗位置、炕/家具布局、关键陈设是固定锚点；**只允许光线、色温、天气、时段变化**。这是人物「禁止变化」概念在场景上的对应，必须写进每个子场景的 `spaceAnchor`。
 3. **场景画风与已锁人物统一**。读 `03_角色设定/定妆造/` 或 `08_生成图片/角色三视图/` 已锁人物的画风、年代、光影，场景必须同源（真人短剧质感 / 民俗年代 / 低饱和等），不另立画风。
 4. **服务器不调 API**。复用 `dingzhuangzao/casting_gallery_server.py` 做评审，所有生图在 agent 步骤做。
+5. **默认与定妆造同页评审**。如果项目同时在做人物定妆和场景美术，不新开第二套网页；把场景/道具模块并入 `08_生成图片/视觉定版评审/manifest.json`，与人物模块共用同一个本地评审页和 `selection-state.json`。
 
 ## 必读上下文
 
@@ -53,7 +54,7 @@ description: Lock reusable scene/location and key-prop reference art for Chinese
 
 ### 2. 生成 manifest（build_scene_manifest.py）
 
-`build_scene_manifest.py` 读分镜+世界观，产出 **casting 兼容 manifest**，直接喂给 `casting_gallery_server.py`：
+`build_scene_manifest.py` 读分镜+世界观，产出 **casting 兼容 manifest**，可直接喂给 `casting_gallery_server.py`；若人物定妆已存在统一评审页，则把本阶段产出的 modules 合并进同一个 manifest：
 
 - module → role(子场景) → state(角度×时段×天气) → groups（候选槽）。
 - 每个 state 的 `worldview` 字段复用为**场景美术依据**：
@@ -65,17 +66,25 @@ description: Lock reusable scene/location and key-prop reference art for Chinese
   - `light`：光线/色温/天气
   - `forbid`：禁止项（现代物件、错误年代元素）
   - `keywords`：关键标签 + `usedByShots` 镜号
-- 默认两组候选行沿用 `Image2 / MJ` 引擎槽（可只用一组）。也可换成「生成版 / 导入版」。
+- 默认候选行沿用 `Gemini Image / Image2 / MJ` 引擎槽（可只用一组）。也可换成「生成版 / 导入版」。
 
 ### 3. 评审与锁定（复用定妆造服务器）
 
-把 `dingzhuangzao/scripts/casting_gallery_server.py` 拷进输出目录，指向本 skill 的 manifest 运行：
+把 `dingzhuangzao/scripts/casting_gallery_server.py` 拷进输出目录，指向本 skill 的 manifest 运行；若是人物+场景同页，优先使用统一目录：
 
 ```bash
 python casting_gallery_server.py --manifest manifest.json --out selection-state.json --port 8791
 ```
 
-左栏「场地→子场景→变体」、中栏候选+❤️心仪、右栏场景美术依据，机制与定妆造完全一致。用户 ❤️ 选图 + `确认此变体` 锁定，被心仪的图成为该变体最终参考。`生成总览图` 仅记录意图。
+推荐统一目录：
+
+```text
+08_生成图片/视觉定版评审/
+```
+
+左栏同页展示「人物定妆 · 角色→时期」和「场景美术 · 场地→子场景→变体」、中栏候选+❤️心仪+局部锁定、右栏依据和提示词，机制与定妆造完全一致。用户 ❤️ 选图 + `确认此变体` 锁定，被心仪的图成为该变体最终参考。`生成总览图` 仅记录意图。
+
+需要后端：需要一个轻量 localhost Python server 来导入图片、读取本地图片、热更新 manifest、保存 `selection-state.json`。它不是生图后端，不调外部 API。只做静态展示时可以不用后端，但不能完成正式审核闭环。
 
 ### 4. 导出定版参考图
 
