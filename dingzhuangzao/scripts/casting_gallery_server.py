@@ -2,7 +2,7 @@
 """视觉定版 Gallery —— 三栏布局本地评审服务器。
 
 左栏：按模块分组，可展开 -> 条目 -> 状态/变体。
-中栏：导入 / Gemini Image / Image2 / MJ 等候选行，图片右上角 ❤️ 心仪标记，
+中栏：导入 / Gemini Image / Image2 / MJ 等候选行，人物定妆默认为三视图候选，图片右上角 ❤️ 心仪标记，
       左上角可锁脸/身体/衣服等局部参考，每个状态有「确认造型」按钮。
 右栏：该状态的世界观/场景背景说明和可复制提示词。
 底部：全部确认后可「生成总览图」（仅记录意图，真正出图由 Codex/Claude 下一步执行）。
@@ -124,6 +124,10 @@ header .head-right{display:flex;align-items:center;gap:12px}
 .stage h2{margin:0;font-size:22px}
 .stage .age{font-size:13px;color:var(--muted);margin-top:4px}
 .head-actions{flex:none}
+.format-toggle{display:inline-flex;align-items:center;gap:4px;padding:3px;border:1px solid var(--line);
+  border-radius:8px;background:var(--panel);box-shadow:var(--shadow)}
+.format-toggle .btn{height:28px;padding:0 12px;font-size:12px;border-color:transparent;box-shadow:none}
+.format-toggle .btn.active{background:var(--accent);border-color:var(--accent);color:white}
 .pickbar{margin:10px 0;padding:9px 13px;background:var(--accent-soft);border:1px solid var(--accent);
   border-radius:8px;font-size:13px;color:var(--accent)}
 .row{margin-top:22px}
@@ -142,6 +146,17 @@ header .head-right{display:flex;align-items:center;gap:12px}
   color:var(--muted);cursor:pointer;font-size:13px;transition:.15s;background:var(--slot-bg)}
 .gen-slot:hover{border-color:var(--accent);color:var(--accent)}
 .gen-slot.marked{border-color:var(--accent);border-style:solid;color:var(--accent);background:var(--accent-soft)}
+.gen-card{position:relative;border:1.5px dashed var(--line);border-radius:12px;overflow:hidden;background:var(--panel);
+  padding:0;text-align:left;
+  box-shadow:var(--shadow);cursor:pointer;transition:.15s}
+.gen-card:hover{transform:translateY(-2px);border-color:var(--accent);color:var(--accent)}
+.gen-card.marked{border-color:var(--accent);border-style:solid;color:var(--accent);background:var(--accent-soft)}
+.gen-card .imgwrap{aspect-ratio:9/13;background:var(--imgwrap);display:flex;align-items:center;justify-content:center}
+.stage.landscape .gen-card .imgwrap{aspect-ratio:16/9}
+.gen-card .ph{color:var(--muted);font-size:12px;text-align:center;padding:14px;line-height:1.6;opacity:.8}
+.gen-card.marked .ph{color:var(--accent);opacity:1}
+.gen-card .meta{padding:8px 10px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
 .card{position:relative;border:2px solid transparent;border-radius:12px;overflow:hidden;background:var(--panel);
   box-shadow:var(--shadow);cursor:pointer;transition:.15s}
@@ -150,6 +165,7 @@ header .head-right{display:flex;align-items:center;gap:12px}
 .card.final{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft),var(--shadow)}
 .card.pickable{outline:2px dashed var(--accent);outline-offset:2px}
 .card .imgwrap{aspect-ratio:9/13;background:var(--imgwrap);display:flex;align-items:center;justify-content:center}
+.stage.landscape .card .imgwrap{aspect-ratio:16/9}
 .card img{display:block;width:100%;height:100%;object-fit:cover}
 .card .ph{color:var(--muted);font-size:12px;text-align:center;padding:14px;line-height:1.6;opacity:.8}
 .heart{position:absolute;top:8px;right:8px;z-index:3;width:34px;height:34px;border-radius:50%;border:0;
@@ -166,6 +182,11 @@ header .head-right{display:flex;align-items:center;gap:12px}
 .card .meta{padding:8px 10px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:6px}
 .card .finaltag{display:none;color:var(--accent);font-weight:600}
 .card.final .finaltag{display:inline}
+.delete-img{position:absolute;right:8px;bottom:34px;z-index:4;height:26px;padding:0 8px;border:1px solid rgba(0,0,0,.12);
+  border-radius:999px;background:rgba(255,255,255,.92);color:#9a2d25;font-size:12px;font-weight:600;cursor:pointer;
+  box-shadow:0 1px 4px rgba(0,0,0,.14);opacity:0;transform:translateY(4px);transition:.15s}
+.card:hover .delete-img{opacity:1;transform:translateY(0)}
+[data-theme="dark"] .delete-img{background:rgba(20,22,26,.9);border-color:var(--line);color:#ff9a8f}
 .notes{margin-top:24px;background:var(--panel);border:1px solid var(--line);border-radius:12px;
   padding:14px 16px;box-shadow:var(--shadow)}
 .notes label{display:block;font-size:13px;color:var(--muted);margin-top:10px}
@@ -218,6 +239,16 @@ header .head-right{display:flex;align-items:center;gap:12px}
 .toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);
   padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;transition:.25s;z-index:50;pointer-events:none}
 .toast.show{opacity:1}
+.lightbox{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;
+  padding:30px;background:rgba(0,0,0,.76)}
+.lightbox.open{display:flex}
+.lightbox-inner{position:relative;max-width:min(1200px,94vw);max-height:92vh;background:#111;border-radius:12px;
+  box-shadow:0 18px 80px rgba(0,0,0,.5);overflow:hidden}
+.lightbox img{display:block;max-width:94vw;max-height:86vh;object-fit:contain;background:#111}
+.lightbox-title{position:absolute;left:0;right:0;bottom:0;padding:10px 14px;background:linear-gradient(transparent,rgba(0,0,0,.78));
+  color:#fff;font-size:12px;line-height:1.5;word-break:break-all}
+.lightbox-close{position:absolute;top:10px;right:10px;z-index:2;width:34px;height:34px;border:1px solid rgba(255,255,255,.35);
+  border-radius:50%;background:rgba(0,0,0,.45);color:#fff;font-size:20px;line-height:1;cursor:pointer}
 </style>
 </head>
 <body>
@@ -247,6 +278,13 @@ header .head-right{display:flex;align-items:center;gap:12px}
   <button class="btn primary" id="overviewBtn">生成总览图</button>
 </div>
 <div class="toast" id="toast"></div>
+<div class="lightbox" id="lightbox" aria-hidden="true">
+  <div class="lightbox-inner">
+    <button class="lightbox-close" id="lightboxClose" type="button" title="关闭">×</button>
+    <img id="lightboxImg" alt="">
+    <div class="lightbox-title" id="lightboxTitle"></div>
+  </div>
+</div>
 
 <script>
 const STATE_KEY = "castingState_v2";
@@ -255,13 +293,14 @@ let STATE = loadState();
 let CUR = {role:null, state:null};
 let ACTIVE_MODE = localStorage.getItem("visualReviewMode") || "casting";
 let PICK_FINAL = null;   // 正在为哪个时期点选最终（key 或 null）
+let CARD_CLICK_TIMER = null;
 
 function loadState(){
   try{ const s = JSON.parse(localStorage.getItem(STATE_KEY)) || blank();
     return Object.assign(blank(), s); }
   catch(e){ return blank(); }
 }
-function blank(){ return {likes:{}, locks:{}, finals:{}, notes:{}, gen:{}, overviewRequested:false}; }
+function blank(){ return {likes:{}, locks:{}, finals:{}, notes:{}, gen:{}, deleted:{}, overviewRequested:false}; }
 function persist(){ localStorage.setItem(STATE_KEY, JSON.stringify(STATE)); }
 // 关键操作自动保存：写本地 + 后台落盘，无需手动点「保存选择」
 function autosave(){ persist(); save(null, null, true); }
@@ -434,6 +473,9 @@ function renderStage(){
   const groups = normalizeGroups(st);
   const k = keyOf(role.name, st.name);
   const notes = STATE.notes[k] || {};
+  const characterMode = isCharacterRole(role.name);
+  const candidateLabel = characterMode ? "三视图候选" : "候选";
+  const markedText = characterMode ? "已标记待生成 ✓（默认 Gemini Image，保存后由 AI 生成三视图）" : "已标记待生成 ✓（默认 Gemini Image，保存后由 AI 出图）";
 
   const rowsHtml = groups.map(g=>{
     const eng = (g.engine||"");
@@ -447,14 +489,17 @@ function renderStage(){
     } else if(eng==="导入"){
       inner = `<div class="empty">点右上角「导入图」上传</div>`;
     } else {
-      // 空的 Image2/MJ 行：点击记录待生成意图
+      // 空的 Image2/MJ 行：默认展示 4 个候选小卡，点击记录待生成意图
       const marked = (STATE.gen&&STATE.gen[`${k}::${eng}`]);
-      inner = `<div class="gen-slot ${marked?'marked':''}" data-gen-engine="${esc(eng)}">
-        ${marked?'已标记待生成 ✓（默认 Gemini Image，保存后由 AI 出图）':'＋ 点此生成/标记「'+esc(eng)+' 候选」'}</div>`;
+      const slots = [1,2,3,4].map(n=>`<article class="gen-slot gen-card ${marked?'marked':''}" data-gen-engine="${esc(eng)}">
+        <div class="imgwrap"><div class="ph">${marked?markedText:'＋ 点此生成/标记'}<br>${esc(eng)} ${candidateLabel} ${n}</div></div>
+        <div class="meta">${esc((eng||'candidate').toLowerCase().replace(/\s+/g,'-'))}-${characterMode?'threeview':'candidate'}-${n}</div>
+      </article>`).join("");
+      inner = `<div class="cards">${slots}</div>`;
     }
     return `<div class="row">
       <div class="row-title"><span class="eng ${engClass}">${esc(eng)}</span>
-        <span>${esc(g.label||"候选")}</span></div>${inner}</div>`;
+        <span>${esc(g.label||candidateLabel)}</span></div>${inner}</div>`;
   }).join("");
 
   const picking = (PICK_FINAL===k);
@@ -464,7 +509,7 @@ function renderStage(){
       <div><h2>${esc(role.name)} · ${esc(st.name)}</h2>
         <div class="age">${esc(st.age||role.age||"")}</div></div>
       <div class="head-actions">
-        <button class="btn" id="importBtn">导入图（≤4张）</button>
+        <button class="btn" id="importBtn">导入横向/竖向图（≤4张）</button>
         <input type="file" id="importInput" accept="image/*" multiple hidden>
       </div>
     </div>
@@ -476,18 +521,32 @@ function renderStage(){
       <label>调整提示词（下一版方向）
         <textarea data-field="adjustments">${esc(notes.adjustments||"")}</textarea></label>
       <div class="state-actions">
-        <button class="btn" id="nextRound">进入下一版</button>
+        <button class="btn" id="nextRound">${characterMode?"进入下一版（三视图）":"进入下一版"}</button>
         <button class="btn primary" id="confirmLook">${STATE.finals[k]?"已确认（取消）":(picking?"点选最终中…":"确认此时期造型")}</button>
       </div>
     </div>`;
 
   // 卡片：点选最终模式 -> 设为最终；否则切换心仪
   stage.querySelectorAll(".heart").forEach(h=>h.onclick=(e)=>{ e.stopPropagation(); onCardClick(role,st,k,h.dataset.id); });
+  stage.querySelectorAll(".delete-img").forEach(b=>b.onclick=(e)=>{
+    e.stopPropagation();
+    deleteImage(role, st, k, b.dataset.id);
+  });
   stage.querySelectorAll(".lockbtn").forEach(b=>b.onclick=(e)=>{
     e.stopPropagation(); toggleLock(k, b.dataset.kind, b.dataset.id);
     renderStage(); renderNav(); renderOverview();
   });
-  stage.querySelectorAll(".card").forEach(c=>c.onclick=()=>onCardClick(role,st,k,c.dataset.id));
+  stage.querySelectorAll(".card").forEach(c=>{
+    c.onclick=()=>{
+      clearTimeout(CARD_CLICK_TIMER);
+      CARD_CLICK_TIMER = setTimeout(()=>onCardClick(role,st,k,c.dataset.id), 220);
+    };
+    c.ondblclick=(e)=>{
+      e.preventDefault();
+      clearTimeout(CARD_CLICK_TIMER);
+      openLightbox(c.dataset.src, c.dataset.id);
+    };
+  });
   // 空行点击 -> 记录生成意图
   stage.querySelectorAll(".gen-slot").forEach(el=>el.onclick=()=>{
     const gk = `${k}::${el.dataset.genEngine}`;
@@ -501,8 +560,12 @@ function renderStage(){
   });
   document.getElementById("confirmLook").onclick=()=>onConfirm(role,st,k);
   document.getElementById("nextRound").onclick=()=>{
-    STATE.notes[k]=STATE.notes[k]||{}; STATE.notes[k].nextRound=true; STATE.notes[k].nextEngine="Gemini Image"; autosave();
-    toast("已标记『进入下一版』：默认 Gemini Image 生成 4 张");
+    STATE.notes[k]=STATE.notes[k]||{};
+    STATE.notes[k].nextRound=true;
+    STATE.notes[k].nextEngine="Gemini Image";
+    STATE.notes[k].nextOutputType=characterMode ? "character_turnaround_3view" : "visual_candidate";
+    autosave();
+    toast(characterMode ? "已标记『进入下一版』：默认 Gemini Image 生成三视图" : "已标记『进入下一版』：默认 Gemini Image 生成 4 张");
   };
   // 导入图：单按钮 -> 选≤4张 -> POST /api/import -> 重建刷新（导入行出现在 Image2 上方）
   const impBtn = document.getElementById("importBtn"), impInput = document.getElementById("importInput");
@@ -586,6 +649,7 @@ function lockLabel(kind){
 
 function cardHtml(role, st, group, img){
   const id = img.id || img.path;
+  if(isDeleted(id)) return "";
   const liked = !!STATE.likes[id];
   const k = keyOf(role.name, st.name);
   const locks = (STATE.locks||{})[k] || {};
@@ -598,15 +662,31 @@ function cardHtml(role, st, group, img){
   const lockButtons = lockOptionsForRole(role.name).map(opt =>
     `<button class="lockbtn ${locks[opt.kind]===id?'active':''}" data-kind="${esc(opt.kind)}" data-id="${esc(id)}" title="${esc(opt.title)}">${esc(opt.label)}</button>`
   ).join("");
-  return `<article class="card ${liked?'liked':''} ${isFinal?'final':''} ${pickable?'pickable':''}" data-id="${esc(id)}">
+  return `<article class="card ${liked?'liked':''} ${isFinal?'final':''} ${pickable?'pickable':''}" data-id="${esc(id)}" data-src="${img.path?('/asset/'+encodeURI(img.path)):''}">
     <div class="locks">${lockButtons}</div>
     <button class="heart" data-id="${esc(id)}" title="心仪">${liked?'❤':'♡'}</button>
     <div class="imgwrap">${inner}</div>
+    <button class="delete-img" data-id="${esc(id)}" type="button" title="从评审中移除">删除</button>
     <div class="meta"><span>${esc(id)}</span><span class="finaltag">最终</span></div>
   </article>`;
 }
 
 function toggleLike(id){ STATE.likes[id] = !STATE.likes[id]; if(!STATE.likes[id]) delete STATE.likes[id]; persist(); }
+function isDeleted(id){ return !!(STATE.deleted && STATE.deleted[id]); }
+function deleteImage(role, st, k, id){
+  if(!id) return;
+  if(!confirm("从当前评审页移除这张图？\\n只会软删除并保存状态，不会删除硬盘图片文件。")) return;
+  STATE.deleted = STATE.deleted || {};
+  STATE.deleted[id] = {role:role.name, state:st.name, deletedAt:new Date().toISOString()};
+  delete STATE.likes[id];
+  if(STATE.finals[k]===id) delete STATE.finals[k];
+  const locks = (STATE.locks||{})[k] || {};
+  for(const kind of Object.keys(locks)) if(locks[kind]===id) delete locks[kind];
+  if(Object.keys(locks).length===0 && STATE.locks) delete STATE.locks[k];
+  autosave();
+  renderStage(); renderNav(); renderProgress(); renderOverview();
+  toast("已从评审中移除，原图文件未删除");
+}
 function toggleLock(k, kind, id){
   STATE.locks = STATE.locks || {};
   STATE.locks[k] = STATE.locks[k] || {};
@@ -624,20 +704,29 @@ function normalizeGroups(st){
   const gs = st.groups || [];
   const find = (frag)=>gs.find(g=>(g.engine||"").toLowerCase().includes(frag));
   const imp = gs.find(g=>(g.engine||"")==="导入");
-  const gemini = find("gemini") || {engine:"Gemini Image", label:"下一版/图生图默认候选", images:[]};
-  const i2 = find("image2") || {engine:"Image2", label:"候选", images:[]};
-  const mj = find("mj") || {engine:"MJ", label:"候选", images:[]};
+  const characterMode = isCharacterRole(CUR.role);
+  const defaultLabel = characterMode ? "三视图候选" : "候选";
+  const gemini = find("gemini") || {engine:"Gemini Image", label:characterMode ? "下一版/图生图默认三视图" : "下一版/图生图默认候选", images:[]};
+  const i2 = find("image2") || {engine:"Image2", label:defaultLabel, images:[]};
+  const mj = find("mj") || {engine:"MJ", label:defaultLabel, images:[]};
   const rest = gs.filter(g=>g!==i2 && g!==mj && g!==imp && g!==gemini);
   return [...(imp?[imp]:[]), gemini, i2, mj, ...rest];
 }
 function stateImageIds(role, st){
   const ids=[];
-  for(const g of (st.groups||[])) for(const im of (g.images||[])) ids.push(im.id||im.path);
+  for(const g of (st.groups||[])) for(const im of (g.images||[])){
+    const id = im.id||im.path;
+    if(id && !isDeleted(id)) ids.push(id);
+  }
   return ids;
 }
 function findModuleName(roleName){
-  for(const {mod, role} of iterRoles()) if(role.name===roleName) return mod.name||"";
+  for(const {mod, role} of iterRoles("all")) if(role.name===roleName) return mod.name||"";
   return "";
+}
+function isCharacterRole(roleName){
+  const modName = findModuleName(roleName);
+  return /人物|定妆/.test(modName) && !/场景|道具/.test(modName);
 }
 
 /* ---------- 右栏 ---------- */
@@ -723,6 +812,7 @@ function confirmedLooks(){
       for(const g of (st.groups||[]))
         for(const im of (g.images||[])){
           const id = im.id||im.path;
+          if(isDeleted(id)) continue;
           if(id===finalId) finalRef={engine:g.engine, id, path:im.path||""};
           else if(STATE.likes[id]) alts.push({engine:g.engine, id, path:im.path||""});
         }
@@ -738,7 +828,29 @@ function genRequests(){
   for(const key in (STATE.gen||{})){
     if(!STATE.gen[key]) continue;
     const parts = key.split("::");
-    if(parts.length>=3) out.push({role:parts[0], state:parts[1], engine:parts.slice(2).join("::")});
+    if(parts.length>=3){
+      const role = parts[0], state = parts[1], engine = parts.slice(2).join("::");
+      out.push({role, state, engine, outputType: isCharacterRole(role) ? "character_turnaround_3view" : "visual_candidate"});
+    }
+  }
+  return out;
+}
+function nextRoundRequests(){
+  const out=[];
+  for(const key in (STATE.notes||{})){
+    const note = STATE.notes[key] || {};
+    if(!note.nextRound) continue;
+    const parts = key.split("::");
+    if(parts.length<2) continue;
+    const role = parts[0], state = parts.slice(1).join("::");
+    out.push({
+      role, state,
+      engine: note.nextEngine || "Gemini Image",
+      outputType: note.nextOutputType || (isCharacterRole(role) ? "character_turnaround_3view" : "visual_candidate"),
+      locks: (STATE.locks||{})[key] || {},
+      likedNote: note.likes || "",
+      adjustments: note.adjustments || ""
+    });
   }
   return out;
 }
@@ -746,9 +858,9 @@ function buildPayload(extra){
   return Object.assign({
     project: MANIFEST.project || "",
     round: MANIFEST.round || 1,
-    likes: STATE.likes, locks: STATE.locks||{}, finals: STATE.finals, notes: STATE.notes, gen: STATE.gen||{},
+    likes: STATE.likes, locks: STATE.locks||{}, finals: STATE.finals, notes: STATE.notes, gen: STATE.gen||{}, deleted: STATE.deleted||{},
     overviewRequested: STATE.overviewRequested,
-    confirmedLooks: confirmedLooks(), genRequests: genRequests(),
+    confirmedLooks: confirmedLooks(), genRequests: genRequests(), nextRoundRequests: nextRoundRequests(),
     confirmedCount: confirmedCount("all"), totalStates: totalStates("all"),
   }, extra||{});
 }
@@ -767,6 +879,26 @@ document.getElementById("overviewBtn").onclick=async ()=>{
   const ok = await save({overviewRequested:true}, "已记录『生成总览图』意图，保存成功，我会据此出图");
   if(ok) renderOverview();
 };
+
+/* ---------- 大图预览 ---------- */
+function openLightbox(src, title){
+  if(!src){ toast("这张还没有图片文件"); return; }
+  const box = document.getElementById("lightbox");
+  document.getElementById("lightboxImg").src = src;
+  document.getElementById("lightboxImg").alt = title || "";
+  document.getElementById("lightboxTitle").textContent = title || "";
+  box.classList.add("open");
+  box.setAttribute("aria-hidden","false");
+}
+function closeLightbox(){
+  const box = document.getElementById("lightbox");
+  box.classList.remove("open");
+  box.setAttribute("aria-hidden","true");
+  document.getElementById("lightboxImg").src = "";
+}
+document.getElementById("lightboxClose").onclick=closeLightbox;
+document.getElementById("lightbox").onclick=(e)=>{ if(e.target.id==="lightbox") closeLightbox(); };
+document.addEventListener("keydown",(e)=>{ if(e.key==="Escape") closeLightbox(); });
 
 /* ---------- 主题（深色/浅色） ---------- */
 const THEME_KEY = "castingTheme";

@@ -18,7 +18,7 @@ Recommended project output:
     start.bat                    # 智能启动（依赖检查/端口冲突/自动开浏览器）
     selection-state.json         # 网页保存的评审状态
     prompts/
-      <角色>_<时期>_Gemini_Image_round01.md  # 下一版/图生图默认候选
+      <角色>_<时期>_Gemini_Image_round01.md  # 下一版/图生图默认三视图
       <角色>_<时期>_Image2_round01.md        # 整句约束
       <角色>_<时期>_MJ_round01.md            # 紧凑标签+英文负向，末尾 --ar 9:16
     candidates/
@@ -114,16 +114,17 @@ Use this JSON shape (see SKILL.md → Manifest Schema for the full field list):
 ```
 
 - `finals[<角色>::<时期>]` 是**单张** image-id（确认造型只能选一张）。`confirmedLooks[].final` 是它的完整引用，`alternates` 是同时期其它 ❤️ 心仪图。
-- `locks[<角色>::<时期>]` 是下一版生成的倾向参考。人物定妆可锁 `face/body/clothes/hair`（脸/身体/衣服/发型）；场景美术/道具可锁 `atmosphere/color/composition/architecture`（氛围/色调/构图/建筑）。后续三视图、人景合一和下一版补图要优先读取这些局部参考。
-- `genRequests` 是空行点击记录的「需生成」意图（角色×时期×引擎）。服务器无出图能力，agent 读到后去出图。
+- `locks[<角色>::<时期>]` 是下一版生成的倾向参考。人物定妆可锁 `face/body/clothes/hair`（脸/身体/衣服/发型）；场景美术/道具可锁 `atmosphere/color/composition/architecture`（氛围/色调/构图/建筑）。人物定妆的后续生成必须优先读取这些局部参考并生成三视图；场景/道具才生成视觉候选。
+- `genRequests` 是空行点击记录的「需生成」意图（角色×时期×引擎）。人物定妆请求带 `outputType: character_turnaround_3view`，必须生成三视图；服务器无出图能力，agent 读到后去出图。
+- `nextRoundRequests` 是点击「进入下一版（三视图）」记录的下一版意图。人物定妆请求同样带 `outputType: character_turnaround_3view`，必须按心仪点、调整提示词和锁定的脸/身体/衣服/发型生成三视图。
 - 导入图存在 `candidates/<角色>/<时期>/导入/round-01/`，在网页作为「导入」行显示在 Gemini/Image2 上方。
 - `confirmedLooks` is the agent's hand-off for turnaround + overview generation: each confirmed period's single final + alternates + locks. Only act on `生成总览图` when `overviewRequested` is true and `confirmedCount === totalStates`.
 
 ## Round Logic
 
-- Round 1 explores four front portrait candidates per role/state/engine.
+- Round 1 explores four three-view turnaround candidates per role/state/engine.
 - The user favorites one or more candidates and writes liked traits.
-- Next round prompts should preserve liked traits and only vary requested changes.
+- Next round prompts should preserve liked traits and only vary requested changes; for 人物定妆, next round is still a three-view sheet, not a portrait-only batch.
 - Confirmed look freezes identity and costume; later prompts may change pose or camera but not facial identity, era styling, or clothing design unless the scene state requires it.
 
 ## Turnaround Prompt Additions
