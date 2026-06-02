@@ -57,9 +57,14 @@ header{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-
 header .title{display:flex;align-items:baseline;gap:12px}
 header h1{margin:0;font-size:18px;letter-spacing:.5px}
 header .proj{font-size:13px;color:var(--muted)}
-header .progress{font-size:13px;color:var(--muted)}
+header .center-tools{display:flex;align-items:center;gap:12px;min-width:360px;justify-content:center}
+header .progress{font-size:13px;color:var(--muted);white-space:nowrap}
 header .progress b{color:var(--accent)}
 header .head-right{display:flex;align-items:center;gap:10px}
+.mode-tabs{display:inline-flex;align-items:center;padding:3px;border:1px solid var(--line);border-radius:9px;background:var(--panel);box-shadow:var(--shadow)}
+.mode-tab{height:30px;padding:0 14px;border:0;border-radius:7px;background:transparent;color:var(--muted);font:inherit;font-size:13px;cursor:pointer}
+.mode-tab:hover{color:var(--ink);background:var(--nav-hover)}
+.mode-tab.active{background:var(--accent);color:#fff}
 .theme-toggle{width:34px;height:34px;border:1px solid var(--line);border-radius:7px;background:var(--panel);
   cursor:pointer;font-size:16px;line-height:1;color:var(--ink)}
 .theme-toggle:hover{border-color:var(--accent)}
@@ -72,6 +77,10 @@ header .head-right{display:flex;align-items:center;gap:10px}
 
 .layout{display:grid;grid-template-columns:268px 1fr 320px;gap:0;height:calc(100vh - 59px)}
 @media(max-width:1180px){.layout{grid-template-columns:240px 1fr}.aside-right{display:none}}
+@media(max-width:860px){
+  header{flex-wrap:wrap}
+  header .center-tools{order:3;width:100%;min-width:0;justify-content:space-between}
+}
 
 /* ---- 左栏：角色导航 ---- */
 .nav{border-right:1px solid var(--line);overflow:auto;padding:14px 10px 60px;background:var(--nav-bg)}
@@ -203,7 +212,13 @@ header .head-right{display:flex;align-items:center;gap:10px}
 <body>
 <header>
   <div class="title"><h1 id="pageTitle">视觉定版评审</h1><span class="proj" id="projName"></span></div>
-  <div class="progress" id="progress"></div>
+  <div class="center-tools">
+    <div class="mode-tabs" id="modeTabs">
+      <button class="mode-tab active" data-mode="casting">定妆造</button>
+      <button class="mode-tab" data-mode="scene">场景美术</button>
+    </div>
+    <div class="progress" id="progress"></div>
+  </div>
   <div class="head-right">
     <button class="theme-toggle" id="themeToggle" title="切换深色/浅色">🌙</button>
     <button class="btn primary" id="saveBtn">保存选择</button>
@@ -227,6 +242,7 @@ const STATE_KEY = "castingState_v2";
 let MANIFEST = null;
 let STATE = loadState();
 let CUR = {role:null, state:null};
+let ACTIVE_MODE = localStorage.getItem("visualReviewMode") || "casting";
 let PICK_FINAL = null;   // 正在为哪个时期点选最终（key 或 null）
 
 function loadState(){
@@ -249,27 +265,58 @@ async function boot(){
   document.getElementById("pageTitle").textContent = MANIFEST.pageTitle || "视觉定版评审";
   document.title = MANIFEST.pageTitle || "视觉定版评审";
   document.getElementById("projName").textContent = MANIFEST.project ? "· " + MANIFEST.project : "";
-  // 默认选第一个角色第一时期
-  const firstRole = (firstModuleRole());
-  if(firstRole){ CUR.role = firstRole.role.name; CUR.state = (firstRole.role.states[0]||{}).name; }
+  initModeTabs();
+  ensureCurrentInMode();
   renderNav(); renderStage(); renderAside(); renderProgress(); renderOverview();
 }
 
-function* iterRoles(){
+function modeLabel(mode){ return mode==="scene" ? "场景美术" : "定妆造"; }
+function moduleMatchesMode(mod, mode){
+  const name = mod.name || "";
+  if(mode==="scene") return name.includes("场景美术") || name.includes("道具定版") || name.includes("关键道具");
+  return name.includes("人物定妆") || (!name.includes("场景美术") && !name.includes("道具定版") && !name.includes("关键道具"));
+}
+function* iterRoles(mode=ACTIVE_MODE){
   for(const mod of (MANIFEST.modules||[{name:"", roles:MANIFEST.roles||[]}]))
+    if(mode==="all" || moduleMatchesMode(mod, mode))
     for(const role of (mod.roles||[])) yield {mod, role};
 }
 function firstModuleRole(){ for(const r of iterRoles()) return r; return null; }
-function findRole(name){ for(const {role} of iterRoles()) if(role.name===name) return role; return null; }
+function findRole(name, mode=ACTIVE_MODE){ for(const {role} of iterRoles(mode)) if(role.name===name) return role; return null; }
 function findState(role, sname){ return (role.states||[]).find(s=>s.name===sname); }
+function ensureCurrentInMode(){
+  const current = CUR.role && findRole(CUR.role);
+  if(current) return;
+  const firstRole = firstModuleRole();
+  if(firstRole){ CUR.role = firstRole.role.name; CUR.state = (firstRole.role.states[0]||{}).name; }
+}
+function initModeTabs(){
+  document.querySelectorAll(".mode-tab").forEach(btn=>{
+    btn.classList.toggle("active", btn.dataset.mode===ACTIVE_MODE);
+    btn.onclick=()=>{
+      ACTIVE_MODE = btn.dataset.mode;
+      localStorage.setItem("visualReviewMode", ACTIVE_MODE);
+      document.querySelectorAll(".mode-tab").forEach(b=>b.classList.toggle("active", b.dataset.mode===ACTIVE_MODE));
+      const firstRole = firstModuleRole();
+      if(firstRole){ CUR.role = firstRole.role.name; CUR.state = (firstRole.role.states[0]||{}).name; }
+      renderNav(); renderStage(); renderAside(); renderProgress();
+    };
+  });
+}
 
-function totalStates(){ let n=0; for(const {role} of iterRoles()) n += (role.states||[]).length; return n; }
-function confirmedCount(){ return Object.keys(STATE.finals).filter(k=>STATE.finals[k]).length; }
+function totalStates(mode=ACTIVE_MODE){ let n=0; for(const {role} of iterRoles(mode)) n += (role.states||[]).length; return n; }
+function confirmedCount(mode=ACTIVE_MODE){
+  let n=0;
+  for(const {role} of iterRoles(mode))
+    for(const s of (role.states||[]))
+      if(STATE.finals[keyOf(role.name, s.name)]) n++;
+  return n;
+}
 
 /* ---------- 左栏 ---------- */
 function renderNav(){
   const nav = document.getElementById("nav");
-  const mods = MANIFEST.modules || [{name:"", roles:MANIFEST.roles||[]}];
+  const mods = (MANIFEST.modules || [{name:"", roles:MANIFEST.roles||[]}]).filter(mod=>moduleMatchesMode(mod, ACTIVE_MODE));
   nav.innerHTML = mods.map(mod=>{
     const roles = (mod.roles||[]).map(role=>{
       const open = role.name===CUR.role;
@@ -574,10 +621,10 @@ function renderAside(){
 /* ---------- 进度 & 总览 ---------- */
 function renderProgress(){
   document.getElementById("progress").innerHTML =
-    `已确认 <b>${confirmedCount()}</b> / ${totalStates()} 个时期造型`;
+    `${modeLabel(ACTIVE_MODE)} 已确认 <b>${confirmedCount(ACTIVE_MODE)}</b> / ${totalStates(ACTIVE_MODE)} 个`;
 }
 function renderOverview(){
-  const done = confirmedCount(), total = totalStates();
+  const done = confirmedCount("all"), total = totalStates("all");
   const all = done===total && total>0;
   const btn = document.getElementById("overviewBtn");
   btn.disabled = !all;
@@ -588,7 +635,7 @@ function renderOverview(){
 
 /* ---------- 保存 ---------- */
 function imgById(id){
-  for(const {role} of iterRoles())
+  for(const {role} of iterRoles("all"))
     for(const st of (role.states||[]))
       for(const g of (st.groups||[]))
         for(const im of (g.images||[]))
@@ -598,7 +645,7 @@ function imgById(id){
 function confirmedLooks(){
   // 供下一步出图：每个已确认时期的「最终单张」+ 心仪备选
   const out=[];
-  for(const {mod, role} of iterRoles())
+  for(const {mod, role} of iterRoles("all"))
     for(const st of (role.states||[])){
       const k = keyOf(role.name, st.name);
       const finalId = STATE.finals[k];
@@ -633,7 +680,7 @@ function buildPayload(extra){
     likes: STATE.likes, locks: STATE.locks||{}, finals: STATE.finals, notes: STATE.notes, gen: STATE.gen||{},
     overviewRequested: STATE.overviewRequested,
     confirmedLooks: confirmedLooks(), genRequests: genRequests(),
-    confirmedCount: confirmedCount(), totalStates: totalStates(),
+    confirmedCount: confirmedCount("all"), totalStates: totalStates("all"),
   }, extra||{});
 }
 async function save(extra, okMsg, silent){
