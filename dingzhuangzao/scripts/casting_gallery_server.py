@@ -288,10 +288,12 @@ header .head-right{display:flex;align-items:center;gap:12px}
 
 <script>
 const STATE_KEY = "castingState_v2";
+const CARD_FORMAT_KEY = "visualReviewCardFormat";
 let MANIFEST = null;
 let STATE = loadState();
 let CUR = {role:null, state:null};
 let ACTIVE_MODE = localStorage.getItem("visualReviewMode") || "casting";
+let CARD_FORMAT = localStorage.getItem(CARD_FORMAT_KEY) || "portrait";
 let PICK_FINAL = null;   // 正在为哪个时期点选最终（key 或 null）
 let CARD_CLICK_TIMER = null;
 
@@ -468,6 +470,8 @@ function bindKeyPanel(nav){
 /* ---------- 中栏 ---------- */
 function renderStage(){
   const stage = document.getElementById("stage");
+  stage.classList.toggle("landscape", CARD_FORMAT==="landscape");
+  stage.classList.toggle("portrait", CARD_FORMAT!=="landscape");
   const role = findRole(CUR.role); const st = role && findState(role, CUR.state);
   if(!role || !st){ stage.innerHTML = `<div class="empty">请选择左侧角色与时期</div>`; return; }
   const groups = normalizeGroups(st);
@@ -509,8 +513,10 @@ function renderStage(){
       <div><h2>${esc(role.name)} · ${esc(st.name)}</h2>
         <div class="age">${esc(st.age||role.age||"")}</div></div>
       <div class="head-actions">
-        <button class="btn" id="importBtn">导入横向/竖向图（≤4张）</button>
-        <input type="file" id="importInput" accept="image/*" multiple hidden>
+        <div class="format-toggle" aria-label="候选图画幅">
+          <button class="btn ${CARD_FORMAT!=="landscape"?'active':''}" type="button" data-card-format="portrait">竖版</button>
+          <button class="btn ${CARD_FORMAT==="landscape"?'active':''}" type="button" data-card-format="landscape">横版</button>
+        </div>
       </div>
     </div>
     ${picking?`<div class="pickbar">从 ❤️ 心仪图中点选一张作为该时期最终造型（再次点「确认」可取消）</div>`:""}
@@ -555,6 +561,12 @@ function renderStage(){
     autosave(); renderStage();
     toast(STATE.gen[gk]?"已标记待生成，默认 Gemini Image 补图":"已取消标记");
   });
+  stage.querySelectorAll("[data-card-format]").forEach(btn=>btn.onclick=()=>{
+    CARD_FORMAT = btn.dataset.cardFormat==="landscape" ? "landscape" : "portrait";
+    localStorage.setItem(CARD_FORMAT_KEY, CARD_FORMAT);
+    renderStage();
+    toast(CARD_FORMAT==="landscape" ? "已切换为横版候选" : "已切换为竖版候选");
+  });
   stage.querySelectorAll(".notes textarea").forEach(t=>t.oninput=()=>{
     STATE.notes[k] = STATE.notes[k]||{}; STATE.notes[k][t.dataset.field]=t.value; persist();
   });
@@ -566,26 +578,6 @@ function renderStage(){
     STATE.notes[k].nextOutputType=characterMode ? "character_turnaround_3view" : "visual_candidate";
     autosave();
     toast(characterMode ? "已标记『进入下一版』：默认 Gemini Image 生成三视图" : "已标记『进入下一版』：默认 Gemini Image 生成 4 张");
-  };
-  // 导入图：单按钮 -> 选≤4张 -> POST /api/import -> 重建刷新（导入行出现在 Image2 上方）
-  const impBtn = document.getElementById("importBtn"), impInput = document.getElementById("importInput");
-  impBtn.onclick = ()=> impInput.click();
-  impInput.onchange = async ()=>{
-    const fileList = Array.from(impInput.files||[]).slice(0,4);
-    if(!fileList.length) return;
-    toast(`读取 ${fileList.length} 张...`);
-    const files = await Promise.all(fileList.map(f=>new Promise(res=>{
-      const rd=new FileReader(); rd.onload=()=>res({name:f.name, dataUrl:rd.result}); rd.readAsDataURL(f);
-    })));
-    const res = await fetch("/api/import",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({role:CUR.role, state:CUR.state, files})});
-    const j = await res.json().catch(()=>({}));
-    if(res.ok && j.ok){
-      toast(`已导入 ${(j.saved||[]).length} 张`);
-      MANIFEST = await (await fetch("/api/manifest")).json();
-      renderStage(); renderAside();
-    } else { toast("导入失败" + (j.error?("："+j.error):"")); }
-    impInput.value = "";
   };
 }
 
@@ -924,9 +916,82 @@ boot();
 </body>
 </html>"""
 
+PREVIEW_PAGE = r"""<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>娃娃仙剪辑版静帧候选</title>
+<style>
+:root{--bg:#f4f0e9;--panel:#fffdf9;--line:#ddd6ca;--ink:#26221c;--muted:#7c7264;--accent:#24695c;--warm:#b35a32}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Microsoft YaHei",system-ui,sans-serif}
+header{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 22px;background:rgba(244,240,233,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+h1{margin:0;font-size:18px}.meta{font-size:13px;color:var(--muted)}a{color:var(--accent);text-decoration:none}
+.wrap{display:grid;grid-template-columns:260px minmax(0,1fr);height:calc(100vh - 58px)}
+nav{overflow:auto;border-right:1px solid var(--line);background:#efe9e0;padding:12px}
+.shotbtn{width:100%;border:1px solid transparent;background:transparent;text-align:left;padding:9px 10px;border-radius:8px;cursor:pointer;color:var(--ink)}
+.shotbtn:hover,.shotbtn.active{background:#fffaf1;border-color:var(--line)}
+.shotbtn b{font-size:14px}.shotbtn span{display:block;font-size:12px;color:var(--muted);margin-top:3px}
+main{overflow:auto;padding:18px 22px 32px}
+.head{display:flex;justify-content:space-between;gap:16px;margin-bottom:14px}.head h2{margin:0 0 5px;font-size:22px}.desc{color:var(--muted);font-size:14px;line-height:1.6}
+.channel{margin:18px 0 26px}.channel h3{margin:0 0 10px;font-size:15px;color:var(--warm);display:flex;align-items:center;gap:8px}.channel h3 small{font-weight:400;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(180px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden;box-shadow:0 8px 22px rgba(68,52,29,.08)}
+.imgbox{aspect-ratio:16/9;background:#e7dfd2;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px}
+.imgbox img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
+.cap{display:flex;justify-content:space-between;gap:8px;padding:8px 10px;font-size:12px;color:var(--muted)}.cap b{color:var(--ink)}
+.missing{border:1px dashed #c9bda9;background:#f7f1e8;color:#8b7a62;padding:20px;border-radius:8px;text-align:center}
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.82);display:none;align-items:center;justify-content:center;z-index:20;padding:20px}.lightbox.open{display:flex}.lightbox img{max-width:96vw;max-height:90vh;object-fit:contain;background:#111}.close{position:fixed;right:18px;top:14px;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.4);color:white;border-radius:999px;width:38px;height:38px;font-size:24px;cursor:pointer}
+@media(max-width:980px){.wrap{grid-template-columns:1fr;height:auto}nav{display:flex;overflow:auto;border-right:0;border-bottom:1px solid var(--line)}.shotbtn{min-width:150px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>《娃娃仙》剪辑版静帧候选</h1><div class="meta" id="summary">加载中...</div></div>
+  <div class="meta"><a href="/">返回视觉定版评审</a></div>
+</header>
+<div class="wrap"><nav id="nav"></nav><main id="main"></main></div>
+<div class="lightbox" id="lightbox"><button class="close" id="close">×</button><img id="big" alt=""></div>
+<script>
+let DATA=[], CUR=0;
+const CHANNELS=["Image2","即梦_Seedream","Nano_Banana_Pro","Midjourney"];
+fetch("/api/preview-candidates").then(r=>r.json()).then(data=>{
+  DATA=data.shots||[]; renderNav(); renderMain();
+  document.getElementById("summary").textContent=`${data.generated}/${data.total} 张已生成；Midjourney 当前为手动渠道`;
+});
+function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));}
+function renderNav(){
+  document.getElementById("nav").innerHTML=DATA.map((s,i)=>`<button class="shotbtn ${i===CUR?'active':''}" data-i="${i}"><b>镜头 ${esc(s.shot)}</b><span>${esc(s.priority)} · ${s.generated}/16 已生成</span></button>`).join("");
+  document.querySelectorAll(".shotbtn").forEach(b=>b.onclick=()=>{CUR=Number(b.dataset.i);renderNav();renderMain();});
+}
+function renderMain(){
+  const s=DATA[CUR]; if(!s){document.getElementById("main").innerHTML="<div class='missing'>没有候选图数据</div>";return;}
+  const rows=CHANNELS.map(ch=>{
+    const imgs=(s.channels&&s.channels[ch])||[];
+    const cards=[1,2,3,4].map(n=>{
+      const img=imgs.find(x=>x.variant===n);
+      if(!img)return `<article class="card"><div class="imgbox">未生成</div><div class="cap"><b>${ch}</b><span>#${n}</span></div></article>`;
+      return `<article class="card"><div class="imgbox"><img src="${img.url}" alt="${esc(img.name)}" data-src="${img.url}"></div><div class="cap"><b>${ch}</b><span>#${n}</span></div></article>`;
+    }).join("");
+    return `<section class="channel"><h3>${esc(ch)} <small>${imgs.length}/4</small></h3><div class="grid">${cards}</div></section>`;
+  }).join("");
+  document.getElementById("main").innerHTML=`<div class="head"><div><h2>镜头 ${esc(s.shot)}</h2><div class="desc">${esc(s.image)}</div></div><div class="meta">${esc(s.priority)} · ${esc(s.subtitle)}</div></div>${rows}`;
+  document.querySelectorAll("img[data-src]").forEach(img=>img.ondblclick=()=>openBig(img.dataset.src));
+}
+function openBig(src){document.getElementById("big").src=src;document.getElementById("lightbox").classList.add("open");}
+function closeBig(){document.getElementById("lightbox").classList.remove("open");document.getElementById("big").src="";}
+document.getElementById("close").onclick=closeBig;document.getElementById("lightbox").onclick=e=>{if(e.target.id==="lightbox")closeBig();};document.addEventListener("keydown",e=>{if(e.key==="Escape")closeBig();});
+</script>
+</body>
+</html>"""
+
 
 def make_handler(manifest_path: Path, output_path: Path):
     root = manifest_path.parent.resolve()
+    project_root = root.parent.parent.resolve()
+    preview_dir = project_root / "09_素材与参考" / "预告剪辑版"
+    preview_candidates = preview_dir / "images_candidates"
+    preview_shots = preview_dir / "manifests" / "preview_shots.json"
     manifest = load_manifest(manifest_path)
 
     class Handler(BaseHTTPRequestHandler):
@@ -939,15 +1004,30 @@ def make_handler(manifest_path: Path, output_path: Path):
             if path in {"/", "/index.html"}:
                 self._send(PAGE.encode("utf-8"), "text/html; charset=utf-8")
                 return
+            if path == "/preview-candidates":
+                self._send(PREVIEW_PAGE.encode("utf-8"), "text/html; charset=utf-8")
+                return
             if path == "/api/manifest":
                 # 每次重新读盘，便于热更新 manifest
                 data = load_manifest(manifest_path)
                 self._send_json(data)
                 return
+            if path == "/api/preview-candidates":
+                self._send_json(self._preview_payload())
+                return
             if path.startswith("/asset/"):
                 rel = unquote(path[len("/asset/"):])
                 target = (root / rel).resolve()
                 if not str(target).startswith(str(root)) or not target.exists():
+                    self._send_json({"error": "not found", "path": rel}, 404)
+                    return
+                ctype = mimetypes.guess_type(str(target))[0] or "application/octet-stream"
+                self._send(target.read_bytes(), ctype)
+                return
+            if path.startswith("/preview-asset/"):
+                rel = unquote(path[len("/preview-asset/"):])
+                target = (preview_candidates / rel).resolve()
+                if not str(target).startswith(str(preview_candidates.resolve())) or not target.exists():
                     self._send_json({"error": "not found", "path": rel}, 404)
                     return
                 ctype = mimetypes.guess_type(str(target))[0] or "application/octet-stream"
@@ -1049,6 +1129,45 @@ def make_handler(manifest_path: Path, output_path: Path):
                 return True
             except Exception:
                 return False
+
+        def _preview_payload(self):
+            try:
+                shots = json.loads(preview_shots.read_text(encoding="utf-8"))
+            except Exception:
+                shots = []
+            channels = ["Image2", "即梦_Seedream", "Nano_Banana_Pro", "Midjourney"]
+            out = []
+            generated = 0
+            total = len(shots) * len(channels) * 4
+            base = preview_candidates.resolve()
+            for shot in shots:
+                shot_no = str(shot.get("shot", "")).zfill(2)
+                shot_dir = preview_candidates / f"shot_{shot_no}"
+                item = {
+                    "shot": shot_no,
+                    "priority": shot.get("priority", ""),
+                    "image": shot.get("image", ""),
+                    "subtitle": shot.get("subtitle", ""),
+                    "channels": {},
+                    "generated": 0,
+                }
+                for channel in channels:
+                    imgs = []
+                    folder = shot_dir / channel
+                    if folder.exists():
+                        for p in sorted(folder.glob("*.png")):
+                            variant = 0
+                            try:
+                                variant = int(p.stem.rsplit("_", 1)[-1])
+                            except Exception:
+                                pass
+                            rel = p.resolve().relative_to(base).as_posix()
+                            imgs.append({"name": p.name, "variant": variant, "url": "/preview-asset/" + rel})
+                    item["channels"][channel] = imgs
+                    item["generated"] += len(imgs)
+                    generated += len(imgs)
+                out.append(item)
+            return {"shots": out, "generated": generated, "total": total}
 
         def _send(self, body: bytes, content_type: str, status: int = 200):
             self.send_response(status)
