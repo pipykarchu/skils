@@ -73,6 +73,7 @@ Do not rely only on the style name. Always include concrete visual features from
 5. **Generate / refine turnarounds**
    - 定妆造生成目标始终是三视图：正面、侧面、背面并排，全身，姿势统一。
    - The `进入下一版（三视图）` action records `nextRoundRequests[].outputType = "character_turnaround_3view"` in `selection-state.json`; the next agent step must generate three-view sheets, not another portrait-only batch.
+   - After clicking `进入下一版（三视图）`, the relevant candidate cards must show an in-card generation status badge such as `下一版待生成`; persist `generationStatus` and `generationRequestedAt` so the status survives refresh and is visible in `nextRoundRequests`.
    - Use the selected image(s), hearts, and local locks as references when the tool path supports references.
    - Prompt for consistent face, same clothing, same fabric, same hairstyle, full body, neutral background, no text, no watermark.
 
@@ -134,7 +135,7 @@ The gallery must support:
 - ❤️ like (multi-select) distinct from `确认此时期造型`; only clicking the heart toggles like. Clicking the card body must not toggle ❤️ during normal browsing; it only selects the final image while the page is in multi-liked pick-one mode. **Confirm is single-select** — `finals[period]` stores one image id (0 likes → prompt; 1 like → auto-final; multiple → pick-one mode)
 - Lock buttons are independent from ❤️ and final confirmation. 人物模块：`脸` / `身体` / `衣服` / `发型`; 场景/道具模块：`氛围` / `色调` / `构图` / `建筑`. Use them when one candidate has the right face but another candidate has better body proportion/costume, or when one scene candidate has better mood but another has better composition/building structure.
 - Left navigation bottom: include a collapsible `平台 Key` panel for Nano Banana Pro / Seedream 5 / Midjourney / Image2 / 可灵 / 即梦 / Seedance. Values are stored only in the current browser `localStorage` (`visualReviewProviderKeys`) and must never be written to `selection-state.json`, project files, skill files, or Git.
-- Key actions (❤️ / 删除 / 双击预览 / 空卡双击生成 / 图生图空卡上传 / 进入下一版 / 确认此造型 / 导入 / 生成意图) **auto-save** to `selection-state.json`; the `保存选择` button is a manual fallback. Double-click preview does not modify state; empty-card double-click can consume API balance after confirmation; 图生图空卡上传 only copies the selected local image into project assets and updates `manifest.json`.
+- Key actions (❤️ / 删除 / 双击预览 / 空卡双击生成 / 图生图空卡上传 / 进入下一版 / 确认此造型 / 导入 / 生成意图) **auto-save** to `selection-state.json`; the `保存选择` button is a manual fallback. Double-click preview does not modify state; empty-card double-click can consume API balance after confirmation; 图生图空卡上传 only copies the selected local image into project assets and updates `manifest.json`. Clicking `进入下一版` must immediately render a visible status badge on the relevant cards, e.g. `下一版待生成`.
 - Dark/light theme toggle (🌙/☀ in header), persisted to localStorage, defaults to system `prefers-color-scheme`
 - Saved JSON (`selection-state.json`) with `confirmedLooks` (each with a single `final` + `alternates` + `locks`), `deleted`, `genRequests`, and `nextRoundRequests` the agent reads next. For 人物定妆, both request arrays must produce three-view sheets; deleted cards must be skipped by export/overview/generation steps.
 

@@ -200,6 +200,11 @@ header .head-right{display:flex;align-items:center;gap:12px}
 .card .meta{padding:8px 10px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:6px}
 .card .finaltag{display:none;color:var(--accent);font-weight:600}
 .card.final .finaltag{display:inline}
+.gen-status{position:absolute;left:8px;bottom:34px;z-index:5;display:inline-flex;align-items:center;gap:5px;
+  max-width:calc(100% - 76px);height:26px;padding:0 9px;border-radius:999px;background:rgba(36,105,92,.94);
+  color:#fff;font-size:12px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.gen-status::before{content:"";width:6px;height:6px;border-radius:50%;background:#fff;animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:.45;transform:scale(.88)}50%{opacity:1;transform:scale(1.08)}}
 .fusion-section{margin-top:18px}
 .fusion-section:first-child{margin-top:0}
 .fusion-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;color:var(--muted);font-size:14px}
@@ -650,13 +655,12 @@ function fusionUploadCard(s, ref){
   const folder = path ? path.split("/").slice(0,-1).join("/") : "08_生成图片/角色三视图";
   const img = path ? `<img src="${refAsset(path)}" alt="${esc(title)}" data-lightbox-src="${refAsset(path)}" data-lightbox-title="${esc(title)}">`
     : `<div class="ph">上传人物三视图<br>${esc(title)}</div>`;
-  const del = uploaded&&uploaded.path ? `<button class="mini-btn" data-delete-upload="role::${esc(title)}">删除上传图</button>` : "";
   return `<article class="fusion-card" data-upload-kind="role" data-upload-name="${esc(title)}">
     <div class="imgwrap">${img}</div>
     <div class="meta"><b title="${esc(title)}">${esc(title)}</b>
       <button class="mini-btn" data-open-folder="${esc(folder)}">打开三视图文件夹</button>
       <button class="mini-btn" data-upload-trigger="role::${esc(title)}">上传/替换三视图</button>
-      ${del}
+      <button class="mini-btn" data-delete-upload="role::${esc(title)}">删除上传图</button>
       <input type="file" accept="image/*" hidden data-upload-input="role::${esc(title)}">
     </div>
   </article>`;
@@ -670,14 +674,13 @@ function fusionSceneCard(s, idx){
   const folder = path ? path.split("/").slice(0,-1).join("/") : "08_生成图片/场景美术";
   const img = path ? `<img src="${refAsset(path)}" alt="${esc(title)}" data-lightbox-src="${refAsset(path)}" data-lightbox-title="${esc(title)}">`
     : `<div class="ph">上传场景图候选 ${idx+1}<br>作为镜头合成环境</div>`;
-  const del = uploaded&&uploaded.path ? `<button class="mini-btn" data-delete-upload="scene::${esc(slot)}">删除上传图</button>` : "";
   return `<article class="fusion-card scene" data-upload-kind="scene" data-upload-name="${esc(slot)}">
     <div class="imgwrap">${img}</div>
     <div class="meta"><b>场景图候选 ${idx+1}</b>
       <span>${esc(title)}</span>
       <button class="mini-btn" data-open-folder="${esc(folder)}">打开场景图文件夹</button>
       <button class="mini-btn" data-upload-trigger="scene::${esc(slot)}">上传/替换场景图</button>
-      ${del}
+      <button class="mini-btn" data-delete-upload="scene::${esc(slot)}">删除上传图</button>
       <input type="file" accept="image/*" hidden data-upload-input="scene::${esc(slot)}">
     </div>
   </article>`;
@@ -686,11 +689,14 @@ function fusionCandidateCard(s, c){
   const id = c.id || c.path;
   const liked = !!FUSION_STATE.likes[id];
   const final = !!FUSION_STATE.finals[s.no] && FUSION_STATE.finals[s.no]===id;
+  const note = fusionNote(s.no);
+  const status = note.nextRound ? `<div class="gen-status">${esc(note.generationStatus || "下一版待生成")}</div>` : "";
   const img = c.path ? `<img src="${refAsset(c.path)}" alt="${esc(id)}" data-lightbox-src="${refAsset(c.path)}" data-lightbox-title="${esc(id)}">`
     : `<div class="ph">待生成镜头图<br>${esc(c.note||id)}</div>`;
   return `<article class="card ${liked?'liked':''} ${final?'final':''}" data-fusion-candidate="${esc(id)}">
     <button class="heart" data-fusion-like="${esc(id)}" title="心仪">${liked?'❤':'♡'}</button>
     <div class="imgwrap">${img}</div>
+    ${status}
     <div class="meta"><span>${esc(id)}</span><span class="finaltag">镜头图</span></div>
   </article>`;
 }
@@ -776,7 +782,14 @@ function bindFusionStage(stage, s){
   if(mode) mode.onchange=()=>{ fusionNote(s.no).replaceMode=mode.value; persistFusion(); renderAside(); };
   const aspect = stage.querySelector("#fusionGenerationAspect");
   if(aspect) aspect.onchange=()=>{ fusionNote(s.no).generationAspect=aspect.value; persistFusion(); renderStage(); };
-  stage.querySelector("#fusionNextRound").onclick=()=>{ fusionNote(s.no).nextRound=true; persistFusion(); fusionSave(null, "已记录进入下一版"); };
+  stage.querySelector("#fusionNextRound").onclick=()=>{
+    const note = fusionNote(s.no);
+    note.nextRound=true;
+    note.generationStatus="下一版待生成";
+    note.generationRequestedAt=new Date().toISOString();
+    persistFusion(); renderStage(); renderNav();
+    fusionSave(null, "已记录进入下一版");
+  };
   stage.querySelector("#fusionConfirmShot").onclick=()=>{
     if(FUSION_STATE.finals[s.no]) delete FUSION_STATE.finals[s.no];
     else {
@@ -856,6 +869,7 @@ function renderStage(){
       const emptyActionText = isMidjourneyEngine(eng) ? '＋ 单击标记 / 双击打开 MJimage' : '＋ 单击标记 / 双击生成';
       const slots = [1,2,3,4].map(n=>`<article class="gen-slot gen-card ${marked?'marked':''}" data-gen-engine="${esc(eng)}" data-gen-slot="${n}">
         <div class="imgwrap"><div class="ph">${marked?markedText:emptyActionText}<br>${esc(eng)} ${candidateLabel} ${n}</div></div>
+        ${generationStatusBadge(k, eng)}
         <div class="meta">${esc((eng||'candidate').toLowerCase().replace(/\s+/g,'-'))}-${characterMode?'threeview':'candidate'}-${n}</div>
       </article>`).join("");
       inner = `<div class="cards">${slots}</div>`;
@@ -963,7 +977,10 @@ function renderStage(){
     STATE.notes[k].nextRound=true;
     STATE.notes[k].nextEngine="Gemini Image";
     STATE.notes[k].nextOutputType=characterMode ? "character_turnaround_3view" : "visual_candidate";
+    STATE.notes[k].generationStatus="下一版待生成";
+    STATE.notes[k].generationRequestedAt=new Date().toISOString();
     autosave();
+    renderStage(); renderNav(); renderOverview();
     toast(characterMode ? "已标记『进入下一版』：默认 Gemini Image 生成三视图" : "已标记『进入下一版』：默认 Gemini Image 生成 4 张");
   };
 }
@@ -976,6 +993,20 @@ function isImageToImageEngine(engine){
 function isMidjourneyEngine(engine){
   const text = String(engine||"").toLowerCase();
   return text==="mj" || text.includes("midjourney");
+}
+
+function generationStatusFor(k, engine){
+  const note = (STATE.notes||{})[k] || {};
+  if(!note.nextRound) return null;
+  const target = note.nextEngine || "Gemini Image";
+  const sameEngine = String(engine||"")===target || (isMidjourneyEngine(engine) && isMidjourneyEngine(target));
+  if(!sameEngine) return null;
+  return note.generationStatus || "下一版待生成";
+}
+
+function generationStatusBadge(k, engine){
+  const text = generationStatusFor(k, engine);
+  return text ? `<div class="gen-status">${esc(text)}</div>` : "";
 }
 
 async function refreshManifestAndRender(){
@@ -1146,6 +1177,7 @@ function cardHtml(role, st, group, img, slot){
     <div class="locks">${lockButtons}</div>
     ${(uploadable || externalMidjourney)?'':`<button class="heart" data-id="${esc(id)}" title="心仪">${liked?'❤':'♡'}</button>`}
     <div class="imgwrap">${inner}</div>
+    ${generationStatusBadge(k, group.engine)}
     ${(uploadable || externalMidjourney)?'':`<button class="delete-img" data-id="${esc(id)}" type="button" title="从评审中移除">删除</button>`}
     <div class="meta"><span>${esc(id)}</span><span class="finaltag">最终</span></div>
   </article>`;
@@ -1395,6 +1427,8 @@ function nextRoundRequests(){
       role, state,
       engine: note.nextEngine || "Gemini Image",
       outputType: note.nextOutputType || (isCharacterRole(role) ? "character_turnaround_3view" : "visual_candidate"),
+      status: note.generationStatus || "下一版待生成",
+      requestedAt: note.generationRequestedAt || "",
       locks: (STATE.locks||{})[key] || {},
       likedNote: note.likes || "",
       adjustments: note.adjustments || ""
