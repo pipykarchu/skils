@@ -29,6 +29,8 @@ description: Use when the user wants to run an end-to-end 0-1 AI 漫剧 producti
 - 保护原创内容：提醒用户剧本、人设、角色图、LoRA 训练图上传外部平台有泄露风险。
 - 已有项目文件优先复用，不覆盖用户原稿；需要改动时追加版本或时间戳。
 - 每次只推进一个明确阶段，阶段完成后给出下一步建议和成功标志。
+- 统一 `视觉定版评审` 网页不在中栏顶部放“导入图”按钮；顶部使用 `竖版 / 横版` 画幅调节，默认候选区以四个小卡片展示，空的 Gemini/Image2/Midjourney 候选也按四小卡占位并可点击标记生成意图。
+- 渠道命名统一：`MJ` 只是 `Midjourney` 的简称/别名，manifest、网页行标题、流程看板和提示词包中不要把 `MJ` 与 `Midjourney` 拆成两个渠道；如遇历史数据里的 `MJ`，合并到 `Midjourney`。
 
 ## 引擎分工（Codex × Claude 协作）
 
@@ -292,7 +294,7 @@ SOP 必须包含：
 
 引擎分工细则：
 
-- Claude：读世界观+角色档案 → 写 MJ版/Image2版造型提示词、定四张候选的受控变化范围、定跨角色与跨场景态的一致性锚点。
+- Claude：读世界观+角色档案 → 写 Midjourney（MJ）版/Image2版造型提示词、定四张候选的受控变化范围、定跨角色与跨场景态的一致性锚点。
 - Codex：跑统一 `casting_gallery_server.py` 视觉定版评审网页、（用户授权后）调生图 API、保存 `selection-state.json`、确认后生成三视图、导出资产、落盘并验证。
 
 成功标志：
