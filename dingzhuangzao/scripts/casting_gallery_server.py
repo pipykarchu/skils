@@ -218,7 +218,16 @@ header .head-right{display:flex;align-items:center;gap:12px}
 .fusion-mode label{font-size:12px;color:var(--muted)}
 .fusion-mode select{width:100%;height:34px;margin-top:5px;border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--ink);font:inherit}
 .fusion-mode .hint{font-size:12px;line-height:1.6;color:var(--muted)}
+.format-picker{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 10px;border:1px solid var(--line);border-radius:7px;background:var(--panel);font-size:12px;color:var(--muted)}
+.format-picker select{height:26px;border:1px solid var(--line);border-radius:6px;background:var(--slot-bg);color:var(--ink);font:inherit;font-size:12px}
 .fusion-prompt{margin-top:14px;background:var(--slot-bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.65;white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.clip-list{display:grid;gap:8px;max-height:360px;overflow:auto;padding-right:2px}
+.clip-item{border:1px solid var(--line);border-radius:8px;padding:8px 9px;background:var(--slot-bg)}
+.clip-item.active{border-color:var(--accent);background:var(--accent-soft)}
+.clip-top{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted);margin-bottom:4px}
+.clip-top b{color:var(--ink)}
+.clip-img{font-size:12px;line-height:1.55;color:var(--ink)}
+.clip-sub{margin-top:4px;font-size:11px;line-height:1.45;color:var(--muted)}
 .shot-link.review .sno::after{content:"!";color:var(--warm);margin-left:3px;font-weight:700}
 .delete-img{position:absolute;right:8px;bottom:34px;z-index:4;height:26px;padding:0 8px;border:1px solid rgba(0,0,0,.12);
   border-radius:999px;background:rgba(255,255,255,.92);color:#9a2d25;font-size:12px;font-weight:600;cursor:pointer;
@@ -330,10 +339,12 @@ const STATE_KEY = "castingState_v2";
 const CARD_FORMAT_KEY = "visualReviewCardFormat";
 let MANIFEST = null;
 let FUSION = null;
+let PREVIEW = null;
 let STATE = loadState();
 let FUSION_STATE = loadFusionState();
 let CUR = {role:null, state:null};
 let FUSION_CUR = null;
+let FUSION_SOURCE = "preview";
 let ACTIVE_MODE = localStorage.getItem("visualReviewMode") || "casting";
 if(!["casting","scene","fusion"].includes(ACTIVE_MODE)) ACTIVE_MODE = "casting";
 let CARD_FORMAT = localStorage.getItem(CARD_FORMAT_KEY) || "portrait";
@@ -365,10 +376,13 @@ async function boot(){
   MANIFEST = await (await fetch("/api/manifest")).json();
   try{ FUSION = await (await fetch("/api/fusion-manifest")).json(); }
   catch(e){ FUSION = {project:MANIFEST.project||"", shots:[]}; }
+  try{ PREVIEW = await (await fetch("/api/preview-candidates")).json(); }
+  catch(e){ PREVIEW = {shots:[]}; }
   document.getElementById("pageTitle").textContent = MANIFEST.pageTitle || "视觉定版评审";
   document.title = MANIFEST.pageTitle || "视觉定版评审";
   document.getElementById("projName").textContent = MANIFEST.project ? "· " + MANIFEST.project : "";
-  if(!FUSION_CUR && fusionShots()[0]) FUSION_CUR = fusionShots()[0].no;
+  if(!FUSION_CUR && findPreviewShot("01")) FUSION_CUR = "01";
+  if(!FUSION_CUR && fusionShots()[0]) { FUSION_CUR = fusionShots()[0].no; FUSION_SOURCE = "episode"; }
   initModeTabs();
   if(ACTIVE_MODE!=="fusion") ensureCurrentInMode();
   renderNav(); renderStage(); renderAside(); renderProgress(); renderOverview();
@@ -402,7 +416,8 @@ function initModeTabs(){
       localStorage.setItem("visualReviewMode", ACTIVE_MODE);
       document.querySelectorAll(".mode-tab").forEach(b=>b.classList.toggle("active", b.dataset.mode===ACTIVE_MODE));
       if(ACTIVE_MODE==="fusion"){
-        if(!FUSION_CUR && fusionShots()[0]) FUSION_CUR = fusionShots()[0].no;
+        if(!FUSION_CUR && findPreviewShot("01")) { FUSION_CUR = "01"; FUSION_SOURCE = "preview"; }
+        if(!FUSION_CUR && fusionShots()[0]) { FUSION_CUR = fusionShots()[0].no; FUSION_SOURCE = "episode"; }
       } else {
         const firstRole = firstModuleRole();
         if(firstRole){ CUR.role = firstRole.role.name; CUR.state = (firstRole.role.states[0]||{}).name; }
@@ -414,6 +429,36 @@ function initModeTabs(){
 
 function fusionShots(){ return (FUSION&&FUSION.shots)||[]; }
 function findFusionShot(no){ return fusionShots().find(s=>s.no===no); }
+function findPreviewShot(no){ return ((PREVIEW&&PREVIEW.shots)||[]).find(s=>String(s.shot).padStart(2,"0")===String(no).padStart(2,"0")); }
+function previewAsFusionShot(no){
+  const p = findPreviewShot(no);
+  if(!p) return null;
+  const shotNo = String(p.shot||no).padStart(2,"0");
+  return {
+    no: shotNo,
+    prompt: p.image || "",
+    negative: "",
+    shot: {
+      "画面目的": p.shot_type || "剪辑版分镜",
+      "景别": "",
+      "运镜": p.motion || "",
+      "时长": p.duration ? `${p.duration}秒` : "",
+      "台词": p.subtitle || "",
+      "场景": p.image || "",
+      "光影": ""
+    },
+    refs: [],
+    replaceMode: {default:"compose", options:["compose","replace_face","replace_pose","replace_face_and_pose"]},
+    candidates: Array.from({length:4}, (_,i)=>({id:`preview-s${shotNo}-${i+1}`, path:"", note:`剪辑版镜头候选${i+1}`})),
+    needsReview: "剪辑版镜头尚未匹配角色三视图和锁定场景，可先手动上传参考图"
+  };
+}
+function currentFusionShot(){
+  if(FUSION_SOURCE === "preview"){
+    return previewAsFusionShot(FUSION_CUR) || findFusionShot(FUSION_CUR);
+  }
+  return findFusionShot(FUSION_CUR) || previewAsFusionShot(FUSION_CUR);
+}
 function totalStates(mode=ACTIVE_MODE){
   if(mode==="fusion") return fusionShots().length;
   let n=0; for(const {role} of iterRoles(mode)) n += (role.states||[]).length; return n;
@@ -477,16 +522,44 @@ function renderNav(){
 function renderFusionNav(){
   const nav = document.getElementById("nav");
   const ep = FUSION&&FUSION.episode ? `第${esc(FUSION.episode)}集` : "镜头列表";
+  const preview = ((PREVIEW&&PREVIEW.shots)||[]);
+  const previewLinks = preview.map(p=>{
+    const no = String(p.shot||"").padStart(2,"0");
+    const active = FUSION_SOURCE==="preview" && String(FUSION_CUR).padStart(2,"0")===no;
+    return `<button class="shot-link ${active?'active':''}" data-preview-no="${esc(no)}" title="${esc(p.image||"")}">
+      <span class="sno">剪${esc(no)}</span><span class="purpose">${esc(p.image||"")}</span><span class="tick">✓</span></button>`;
+  }).join("");
   const links = fusionShots().map(s=>{
-    const active = s.no===FUSION_CUR;
+    const active = FUSION_SOURCE==="episode" && s.no===FUSION_CUR;
     const conf = !!(FUSION_STATE.finals||{})[s.no];
     const review = !!s.needsReview;
     const purpose = (s.shot&&s.shot["画面目的"]) || "";
     return `<button class="shot-link ${active?'active':''} ${conf?'confirmed':''} ${review?'review':''}" data-no="${esc(s.no)}">
       <span class="sno">${esc(s.no)}</span><span class="purpose">${esc(purpose)}</span><span class="tick">✓</span></button>`;
   }).join("");
-  nav.innerHTML = `<div class="module-title">${esc(ep)} · ${fusionShots().length}镜</div>${links || `<div class="empty" style="padding:20px 8px">还没有 shot-manifest.json</div>`}`;
-  nav.querySelectorAll(".shot-link").forEach(b=>b.onclick=()=>{
+  nav.innerHTML = `
+    <div class="module">
+      <div class="module-title">剪辑版分镜 · ${preview.length}镜</div>
+      ${previewLinks || `<div class="empty" style="padding:20px 8px">未读取到剪辑版分镜</div>`}
+    </div>
+    <div class="module">
+      <div class="module-title">${esc(ep)} · ${fusionShots().length}镜</div>
+      ${links || `<div class="empty" style="padding:20px 8px">还没有 shot-manifest.json</div>`}
+    </div>`;
+  nav.querySelectorAll("[data-preview-no]").forEach(b=>b.onclick=()=>{
+    const no = b.dataset.previewNo;
+    FUSION_SOURCE = "preview";
+    if(findFusionShot(no)){
+      FUSION_CUR = no;
+      renderNav(); renderStage(); renderAside(); renderProgress(); renderOverview();
+    } else {
+      FUSION_CUR = no;
+      renderNav(); renderStage(); renderAside(); renderProgress(); renderOverview();
+      toast(`剪辑版镜 ${no} 暂无对应合成清单`);
+    }
+  });
+  nav.querySelectorAll("[data-no]").forEach(b=>b.onclick=()=>{
+    FUSION_SOURCE = "episode";
     FUSION_CUR = b.dataset.no;
     renderNav(); renderStage(); renderAside(); renderProgress(); renderOverview();
   });
@@ -549,7 +622,10 @@ function bindKeyPanel(nav){
 }
 
 /* ---------- 人景合一：中栏/右栏/保存 ---------- */
-const FUSION_CHANNELS = ["Image2", "Gemini Image", "Nano Banana Pro"];
+const FUSION_ASPECTS = [
+  {id:"portrait", label:"竖版 9:16"},
+  {id:"landscape", label:"横版 16:9"}
+];
 const FUSION_MODE_LABELS = {
   compose:"人物三视图 + 场景合成",
   replace_face:"场景图已有身体，只换脸",
@@ -558,7 +634,7 @@ const FUSION_MODE_LABELS = {
 };
 function fusionNote(no){ FUSION_STATE.notes[no]=FUSION_STATE.notes[no]||{}; return FUSION_STATE.notes[no]; }
 function fusionUpload(no, name){ return (((FUSION_STATE.uploadedRefs||{})[no]||{})[name]) || null; }
-function fusionSceneInput(no, channel){ return (((FUSION_STATE.sceneInputs||{})[no]||{})[channel]) || null; }
+function fusionSceneInput(no, slot){ return (((FUSION_STATE.sceneInputs||{})[no]||{})[slot]) || null; }
 function refAsset(path){ return path ? `/asset/${encodeURI(path)}` : ""; }
 function fusionRoles(s){ return (s.refs||[]).filter(r=>r.kind==="role"); }
 function fusionSceneRefs(s){ return (s.refs||[]).filter(r=>r.kind==="scene"); }
@@ -570,29 +646,34 @@ function fusionUploadCard(s, ref){
   const uploaded = fusionUpload(s.no, ref.name);
   const path = uploaded&&uploaded.path ? uploaded.path : ref.path;
   const title = ref.name || "角色";
+  const folder = path ? path.split("/").slice(0,-1).join("/") : "08_生成图片/角色三视图";
   const img = path ? `<img src="${refAsset(path)}" alt="${esc(title)}" data-lightbox-src="${refAsset(path)}" data-lightbox-title="${esc(title)}">`
     : `<div class="ph">上传人物三视图<br>${esc(title)}</div>`;
   return `<article class="fusion-card" data-upload-kind="role" data-upload-name="${esc(title)}">
     <div class="imgwrap">${img}</div>
     <div class="meta"><b title="${esc(title)}">${esc(title)}</b>
+      <button class="mini-btn" data-open-folder="${esc(folder)}">打开三视图文件夹</button>
       <button class="mini-btn" data-upload-trigger="role::${esc(title)}">上传/替换三视图</button>
       <input type="file" accept="image/*" hidden data-upload-input="role::${esc(title)}">
     </div>
   </article>`;
 }
-function fusionSceneCard(s, channel, idx){
-  const uploaded = fusionSceneInput(s.no, channel);
+function fusionSceneCard(s, idx){
+  const slot = `scene_${idx+1}`;
+  const uploaded = fusionSceneInput(s.no, slot);
   const locked = fusionSceneRefs(s)[idx] || fusionSceneRefs(s)[0] || {};
   const path = uploaded&&uploaded.path ? uploaded.path : locked.path;
-  const title = uploaded&&uploaded.name ? uploaded.name : (locked.name || "场景图");
-  const img = path ? `<img src="${refAsset(path)}" alt="${esc(title)}" data-lightbox-src="${refAsset(path)}" data-lightbox-title="${esc(channel+' · '+title)}">`
-    : `<div class="ph">上传${esc(channel)}场景图<br>作为镜头合成环境</div>`;
-  return `<article class="fusion-card scene" data-upload-kind="scene" data-upload-name="${esc(channel)}">
+  const title = uploaded&&uploaded.name ? uploaded.name : (locked.name || `场景图候选 ${idx+1}`);
+  const folder = path ? path.split("/").slice(0,-1).join("/") : "08_生成图片/场景美术";
+  const img = path ? `<img src="${refAsset(path)}" alt="${esc(title)}" data-lightbox-src="${refAsset(path)}" data-lightbox-title="${esc(title)}">`
+    : `<div class="ph">上传场景图候选 ${idx+1}<br>作为镜头合成环境</div>`;
+  return `<article class="fusion-card scene" data-upload-kind="scene" data-upload-name="${esc(slot)}">
     <div class="imgwrap">${img}</div>
-    <div class="meta"><b>${esc(channel)}</b>
+    <div class="meta"><b>场景图候选 ${idx+1}</b>
       <span>${esc(title)}</span>
-      <button class="mini-btn" data-upload-trigger="scene::${esc(channel)}">上传/替换场景图</button>
-      <input type="file" accept="image/*" hidden data-upload-input="scene::${esc(channel)}">
+      <button class="mini-btn" data-open-folder="${esc(folder)}">打开场景图文件夹</button>
+      <button class="mini-btn" data-upload-trigger="scene::${esc(slot)}">上传/替换场景图</button>
+      <input type="file" accept="image/*" hidden data-upload-input="scene::${esc(slot)}">
     </div>
   </article>`;
 }
@@ -610,25 +691,32 @@ function fusionCandidateCard(s, c){
 }
 function renderFusionStage(){
   const stage = document.getElementById("stage");
-  const s = findFusionShot(FUSION_CUR);
+  const s = currentFusionShot();
   if(!s){ stage.innerHTML = `<div class="empty">请选择左侧镜号，或先生成 shot-manifest.json</div>`; return; }
   const note = fusionNote(s.no);
   const selectedMode = note.replaceMode || (s.replaceMode&&s.replaceMode.default) || "compose";
-  const roleCards = fusionRoles(s).map(r=>fusionUploadCard(s,r)).join("") || `<div class="empty" style="padding:18px 0">该镜未识别到角色，可先在 shot-manifest.json 补 refs</div>`;
-  const sceneCards = FUSION_CHANNELS.map((ch,i)=>fusionSceneCard(s,ch,i)).join("");
+  const selectedAspect = note.generationAspect || "portrait";
+  stage.classList.toggle("landscape", selectedAspect==="landscape");
+  stage.classList.toggle("portrait", selectedAspect!=="landscape");
+  const aspectOptions = FUSION_ASPECTS.map(a=>`<option value="${esc(a.id)}" ${a.id===selectedAspect?'selected':''}>${esc(a.label)}</option>`).join("");
+  const roleRefs = fusionRoles(s);
+  const roleCards = (roleRefs.length ? roleRefs : Array.from({length:3}, (_,i)=>({
+    kind:"role", name:`人物三视图候选 ${i+1}`, path:"", confidence:"manual"
+  }))).map(r=>fusionUploadCard(s,r)).join("");
+  const sceneCount = Math.max(3, fusionSceneRefs(s).length || 1);
+  const sceneCards = Array.from({length:sceneCount}, (_,i)=>fusionSceneCard(s,i)).join("");
   const cands = (s.candidates||[]).map(c=>fusionCandidateCard(s,c)).join("");
   stage.innerHTML = `
-    <div class="crumb">人景合一 / 第${esc((FUSION&&FUSION.episode)||"")}集 / 镜 ${esc(s.no)}</div>
+    <div class="crumb">人景合一 / ${FUSION_SOURCE==="preview"?"剪辑版分镜":`第${esc((FUSION&&FUSION.episode)||"")}集`} / 镜 ${esc(s.no)}</div>
     <div class="head"><div><h2>镜 ${esc(s.no)} · 合并生成镜头图片</h2>
-      <div class="age">${esc((s.shot&&s.shot["画面目的"])||"")}</div></div>
-      <div class="head-actions"><button class="btn primary" id="fusionGenerateBtn">根据分镜生成镜头图</button></div></div>
+      <div class="age">${esc((s.shot&&s.shot["画面目的"])||"")}</div></div></div>
     ${s.needsReview?`<div class="pickbar">待校正：${esc(s.needsReview)}</div>`:""}
     <section class="fusion-section">
       <div class="fusion-title"><b>人物三视图</b><span>根据本镜出现角色自动给上传框</span></div>
       <div class="fusion-grid">${roleCards}</div>
     </section>
     <section class="fusion-section">
-      <div class="fusion-title"><b>场景图</b><span>Image2 / Gemini Image / Nano Banana Pro</span></div>
+      <div class="fusion-title"><b>场景图</b><span>只放场景候选，不标模型</span></div>
       <div class="fusion-grid">${sceneCards}</div>
     </section>
     <div class="fusion-mode">
@@ -638,7 +726,15 @@ function renderFusionStage(){
       <div class="hint">按右侧分镜故事和原始主提示词合成；如果场景图里已经有人物，可选择换脸、换动作或换脸+换动作。</div>
     </div>
     <section class="fusion-section">
-      <div class="fusion-title"><b>镜头图片候选</b><span>点心仪，再确认该镜</span></div>
+      <div class="fusion-title">
+        <b>镜头图片候选</b>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+          <label class="format-picker">画幅
+            <select id="fusionGenerationAspect">${aspectOptions}</select>
+          </label>
+          <button class="btn primary" id="fusionGenerateBtn">根据分镜生成镜头图候选</button>
+        </div>
+      </div>
       <div class="cards">${cands}</div>
       <div class="notes">
         <label>心仪的点 / 要保留的画面
@@ -658,6 +754,7 @@ function bindFusionStage(stage, s){
     const input = stage.querySelector(`[data-upload-input="${btn.dataset.uploadTrigger}"]`);
     if(input) input.click();
   });
+  stage.querySelectorAll("[data-open-folder]").forEach(btn=>btn.onclick=()=>openProjectFolder(btn.dataset.openFolder));
   stage.querySelectorAll("[data-upload-input]").forEach(input=>input.onchange=()=>handleFusionUpload(input, s));
   stage.querySelectorAll("[data-lightbox-src]").forEach(img=>img.ondblclick=()=>openLightbox(img.dataset.lightboxSrc, img.dataset.lightboxTitle||""));
   stage.querySelectorAll("[data-fusion-like]").forEach(btn=>btn.onclick=(e)=>{
@@ -672,8 +769,10 @@ function bindFusionStage(stage, s){
   });
   const mode = stage.querySelector("#fusionReplaceMode");
   if(mode) mode.onchange=()=>{ fusionNote(s.no).replaceMode=mode.value; persistFusion(); renderAside(); };
+  const aspect = stage.querySelector("#fusionGenerationAspect");
+  if(aspect) aspect.onchange=()=>{ fusionNote(s.no).generationAspect=aspect.value; persistFusion(); renderStage(); };
   stage.querySelector("#fusionGenerateBtn").onclick=()=>{
-    FUSION_STATE.genRequests[s.no]={shotNo:s.no, channels:FUSION_CHANNELS, replacementMode:fusionNote(s.no).replaceMode || (s.replaceMode&&s.replaceMode.default) || "compose", requestedAt:new Date().toISOString()};
+    FUSION_STATE.genRequests[s.no]={shotNo:s.no, aspect:fusionNote(s.no).generationAspect || "portrait", replacementMode:fusionNote(s.no).replaceMode || (s.replaceMode&&s.replaceMode.default) || "compose", requestedAt:new Date().toISOString()};
     persistFusion(); fusionSave(null, "已记录生成镜头图请求；真正调用生图前还需要你确认额度和上传风险");
   };
   stage.querySelector("#fusionNextRound").onclick=()=>{ fusionNote(s.no).nextRound=true; persistFusion(); fusionSave(null, "已记录进入下一版"); };
@@ -704,6 +803,12 @@ async function handleFusionUpload(input, shot){
   }
   persistFusion(); renderStage(); fusionSave(null, "已上传并保存到本地");
 }
+async function openProjectFolder(folder){
+  const res = await fetch("/api/open-folder",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({path:folder})});
+  const out = await res.json().catch(()=>({}));
+  toast(res.ok ? "已打开本地文件夹" : (out.error||"打开文件夹失败"));
+}
 
 /* ---------- 中栏 ---------- */
 function renderStage(){
@@ -725,7 +830,7 @@ function renderStage(){
     const lowEng = eng.toLowerCase();
     const engClass = (lowEng.includes("midjourney") || lowEng==="mj") ? "mj" : (lowEng.includes("gemini") ? "gemini" : (eng==="导入" ? "imp" : "image2"));
     const hasImg = g.images && g.images.length;
-    const cards = (g.images||[]).map(img=>cardHtml(role, st, g, img)).join("");
+    const cards = (g.images||[]).map((img,idx)=>cardHtml(role, st, g, img, idx+1)).join("");
     let inner;
     if(hasImg){
       inner = `<div class="cards">${cards}</div>`;
@@ -781,8 +886,16 @@ function renderStage(){
     e.stopPropagation(); toggleLock(k, b.dataset.kind, b.dataset.id);
     renderStage(); renderNav(); renderOverview();
   });
+  stage.querySelectorAll("[data-upload-slot]").forEach(c=>{
+    c.onclick=(e)=>{
+      e.preventDefault();
+      if(PICK_FINAL===k) return;
+      uploadImageToImageSlot(c, role, st);
+    };
+  });
   stage.querySelectorAll(".card").forEach(c=>{
     if(c.classList.contains("gen-slot")) return;
+    if(c.dataset.uploadSlot) return;
     c.onclick=()=>{
       if(PICK_FINAL!==k) return;
       clearTimeout(CARD_CLICK_TIMER);
@@ -832,9 +945,59 @@ function renderStage(){
   };
 }
 
+function isImageToImageEngine(engine){
+  const text = String(engine||"").toLowerCase();
+  return String(engine||"").includes("图生图") || text.includes("img2img") || text.includes("image-to-image");
+}
+
 async function refreshManifestAndRender(){
   MANIFEST = await (await fetch("/api/manifest")).json();
   renderNav(); renderStage(); renderAside(); renderProgress(); renderOverview();
+}
+
+function chooseLocalImage(){
+  return new Promise(resolve=>{
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/png,image/jpeg,image/webp";
+    input.onchange = ()=>resolve(input.files && input.files[0] ? input.files[0] : null);
+    input.click();
+  });
+}
+
+function fileToDataUrl(file){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=>resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadImageToImageSlot(card, role, st){
+  const slot = Number(card.dataset.uploadSlot || 1);
+  const engine = card.dataset.uploadEngine || "图生图";
+  const file = await chooseLocalImage();
+  if(!file) return;
+  if(!/^image\/(png|jpeg|webp)$/.test(file.type)){
+    toast("请选择 PNG / JPG / WebP 图片");
+    return;
+  }
+  toast("正在上传到图生图卡片...");
+  try{
+    const dataUrl = await fileToDataUrl(file);
+    const res = await fetch("/api/upload-slot", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({role:role.name, state:st.name, engine, slot, file:{name:file.name, dataUrl}})
+    });
+    const out = await res.json();
+    if(!res.ok) throw new Error(out.error || "上传失败");
+    await refreshManifestAndRender();
+    toast("已上传到图生图卡片");
+  }catch(err){
+    toast(err.message || "上传失败");
+  }
 }
 
 async function generateSlot(el, role, st, k){
@@ -923,26 +1086,27 @@ function lockLabel(kind){
   return hit ? hit.label : kind;
 }
 
-function cardHtml(role, st, group, img){
+function cardHtml(role, st, group, img, slot){
   const id = img.id || img.path;
   if(isDeleted(id)) return "";
   const liked = !!STATE.likes[id];
   const k = keyOf(role.name, st.name);
   const locks = (STATE.locks||{})[k] || {};
+  const uploadable = !img.path && isImageToImageEngine(group.engine);
   // 单选最终：finals[k] 存被选中的那张 id
   const isFinal = STATE.finals[k] === id;
   const pickable = (PICK_FINAL===k && liked);
   const inner = img.path
     ? `<img src="/asset/${encodeURI(img.path)}" alt="${esc(id)}" loading="lazy">`
-    : `<div class="ph">占位<br>${esc(img.note||id)}</div>`;
-  const lockButtons = lockOptionsForRole(role.name).map(opt =>
+    : `<div class="ph">${uploadable?'＋ 点击上传图生图参考':'占位'}<br>${esc(img.note||id)}</div>`;
+  const lockButtons = uploadable ? "" : lockOptionsForRole(role.name).map(opt =>
     `<button class="lockbtn ${locks[opt.kind]===id?'active':''}" data-kind="${esc(opt.kind)}" data-id="${esc(id)}" title="${esc(opt.title)}">${esc(opt.label)}</button>`
   ).join("");
-  return `<article class="card ${liked?'liked':''} ${isFinal?'final':''} ${pickable?'pickable':''}" data-id="${esc(id)}" data-src="${img.path?('/asset/'+encodeURI(img.path)):''}">
+  return `<article class="card ${liked?'liked':''} ${isFinal?'final':''} ${pickable?'pickable':''}" data-id="${esc(id)}" data-src="${img.path?('/asset/'+encodeURI(img.path)):''}" ${uploadable?`data-upload-slot="${slot||1}" data-upload-engine="${esc(group.engine||'图生图')}"`:''}>
     <div class="locks">${lockButtons}</div>
-    <button class="heart" data-id="${esc(id)}" title="心仪">${liked?'❤':'♡'}</button>
+    ${uploadable?'':`<button class="heart" data-id="${esc(id)}" title="心仪">${liked?'❤':'♡'}</button>`}
     <div class="imgwrap">${inner}</div>
-    <button class="delete-img" data-id="${esc(id)}" type="button" title="从评审中移除">删除</button>
+    ${uploadable?'':`<button class="delete-img" data-id="${esc(id)}" type="button" title="从评审中移除">删除</button>`}
     <div class="meta"><span>${esc(id)}</span><span class="finaltag">最终</span></div>
   </article>`;
 }
@@ -1059,16 +1223,38 @@ function renderAside(){
 
 function renderFusionAside(){
   const aside = document.getElementById("aside");
-  const s = findFusionShot(FUSION_CUR);
+  const s = currentFusionShot();
   if(!s){ aside.innerHTML = ""; return; }
   const sh = s.shot || {};
   const note = fusionNote(s.no);
+  const preview = findPreviewShot(s.no);
   const mode = note.replaceMode || (s.replaceMode&&s.replaceMode.default) || "compose";
+  const storyTitle = FUSION_SOURCE==="preview" ? "剪辑版分镜故事" : "分镜故事";
+  const promptTitle = FUSION_SOURCE==="preview" ? "剪辑版提示词 / 画面描述" : "分镜提示词";
+  const promptSource = FUSION_SOURCE==="preview" ? "只读，来自剪辑版分镜" : "只读，来自 07_绘图提示词";
   const row=(k,v)=> v ? `<div class="k">${esc(k)}</div><div class="v">${esc(v)}</div>` : "";
+  const previewDetailBlock = preview ? `
+    <div class="prompt-block">
+      <h3>当前同号剪辑镜头</h3>
+      <div class="kv">
+        ${row("时间", `${preview.start||""}${preview.duration?` · ${preview.duration}秒`:""}`)}
+        ${row("类型", preview.shot_type)}
+        ${row("画面", preview.image)}
+        ${row("动效/生成方式", preview.motion)}
+        ${row("旁白/字幕", preview.subtitle)}
+        ${row("音效", preview.sound)}
+        ${row("平台", preview.platform)}
+        ${row("优先级", preview.priority)}
+      </div>
+    </div>` : `
+    <div class="prompt-block">
+      <h3>当前同号剪辑镜头</h3>
+      <div class="pempty">剪辑版分镜里没有匹配到镜 ${esc(s.no)}。</div>
+    </div>`;
   aside.innerHTML = `
     <div class="tone"><div class="lab">人景合一方式</div><div class="val">${esc(FUSION_MODE_LABELS[mode]||mode)}</div></div>
     <div class="wv-block">
-      <h3>分镜故事</h3>
+      <h3>${storyTitle}</h3>
       <div class="era">镜 ${esc(s.no)} · ${esc(sh["画面目的"]||"")}</div>
       <div class="kv">
         ${row("景别", sh["景别"])}
@@ -1079,8 +1265,9 @@ function renderFusionAside(){
         ${sh["台词"]?`<div class="k">台词</div><div class="v">${esc(sh["台词"])}</div>`:""}
       </div>
     </div>
+    ${previewDetailBlock}
     <div class="prompt-block">
-      <h3>分镜提示词 <span class="pmuted">只读，来自 07_绘图提示词</span></h3>
+      <h3>${promptTitle} <span class="pmuted">${promptSource}</span></h3>
       <pre class="fusion-prompt">${esc(s.prompt||"")}</pre>
       ${s.negative?`<h3 style="margin-top:14px">负面提示词</h3><pre class="fusion-prompt">${esc(s.negative)}</pre>`:""}
     </div>`;
@@ -1434,8 +1621,14 @@ def make_handler(manifest_path: Path, output_path: Path):
             if path == "/api/fusion-upload":
                 self._handle_fusion_upload()
                 return
+            if path == "/api/open-folder":
+                self._handle_open_folder()
+                return
             if path == "/api/import":
                 self._handle_import()
+                return
+            if path == "/api/upload-slot":
+                self._handle_upload_slot()
                 return
             if path == "/api/generate-slot":
                 self._handle_generate_slot()
@@ -1452,6 +1645,65 @@ def make_handler(manifest_path: Path, output_path: Path):
                     if target.exists() and (str(target).startswith(str(root)) or str(target).startswith(str(project_root))):
                         return target
             return None
+
+        def _handle_upload_slot(self):
+            length = int(self.headers.get("Content-Length", "0") or "0")
+            if length <= 0:
+                self._send_json({"error": "empty body"}, 400)
+                return
+            try:
+                payload = json.loads(self.rfile.read(length).decode("utf-8"))
+            except Exception as exc:
+                self._send_json({"error": f"bad json: {exc}"}, 400)
+                return
+
+            role_name = (payload.get("role") or "").strip()
+            state_name = (payload.get("state") or "").strip()
+            engine = (payload.get("engine") or "图生图").strip()
+            file = payload.get("file") or {}
+            try:
+                slot = max(1, min(4, int(payload.get("slot") or 1)))
+            except Exception:
+                slot = 1
+            if not role_name or not state_name or not file:
+                self._send_json({"error": "missing role/state/file"}, 400)
+                return
+            data_url = file.get("dataUrl", "")
+            m = re.match(r"data:image/(png|jpeg|jpg|webp);base64,(.+)", data_url, re.I | re.S)
+            if not m:
+                self._send_json({"error": "只支持 PNG / JPG / WebP 图片"}, 400)
+                return
+            ext = "jpg" if m.group(1).lower() in {"jpeg", "jpg"} else m.group(1).lower()
+            try:
+                image_bytes = base64.b64decode(m.group(2))
+            except Exception:
+                self._send_json({"error": "bad image base64"}, 400)
+                return
+
+            current = load_manifest(manifest_path)
+            found = self._find_role_state(current, role_name, state_name)
+            if not found:
+                self._send_json({"error": "manifest 中找不到该角色/时期"}, 404)
+                return
+            module, role, state = found
+            rel_path, image_id = self._save_uploaded_slot(module, role, state, engine, slot, image_bytes, ext, file.get("name"))
+            group = self._ensure_group(state, engine)
+            images = group.setdefault("images", [])
+            while len(images) < slot:
+                idx = len(images) + 1
+                images.append({
+                    "id": f"{self._safe_name(role.get('name'))}-{self._safe_name(state.get('name'))}-{self._safe_name(engine)}-{idx:02d}",
+                    "path": "",
+                    "note": f"{engine} 候选 {idx}",
+                })
+            images[slot - 1] = {
+                **(images[slot - 1] or {}),
+                "id": image_id,
+                "path": rel_path,
+                "note": f"{engine} 上传参考图 {slot}",
+            }
+            manifest_path.write_text(json.dumps(current, ensure_ascii=False, indent=2), encoding="utf-8")
+            self._send_json({"ok": True, "path": rel_path, "id": image_id, "engine": engine, "slot": slot})
 
         def _handle_generate_slot(self):
             length = int(self.headers.get("Content-Length", "0") or "0")
@@ -1676,6 +1928,25 @@ def make_handler(manifest_path: Path, output_path: Path):
             image_id = f"{role_dir}-{state_dir}-{engine_dir}-{slot:02d}"
             return rel_path, image_id
 
+        def _save_uploaded_slot(self, module: dict, role: dict, state: dict, engine: str, slot: int, image_bytes: bytes, ext: str, original_name=None):
+            category = self._category_for_module(module.get("name") or "")
+            role_dir = self._safe_name(role.get("name"))
+            state_dir = self._safe_name(state.get("imageDir") or state.get("name"))
+            engine_dir = self._safe_name(engine)
+            target_dir = (root / "candidates" / category / role_dir / state_dir / engine_dir / "round-01").resolve()
+            try:
+                target_dir.relative_to(root)
+            except ValueError:
+                raise RuntimeError("path escape")
+            target_dir.mkdir(parents=True, exist_ok=True)
+            stem = self._safe_name(Path(str(original_name or "")).stem) or "upload"
+            filename = f"{slot:02d}_上传_{stem}.{ext}"
+            target = target_dir / filename
+            target.write_bytes(image_bytes)
+            rel_path = target.relative_to(root).as_posix()
+            image_id = f"{role_dir}-{state_dir}-{engine_dir}-{slot:02d}"
+            return rel_path, image_id
+
         def _handle_fusion_upload(self):
             import base64
             import re as _re
@@ -1723,6 +1994,35 @@ def make_handler(manifest_path: Path, output_path: Path):
             target.write_bytes(blob)
             rel = target.resolve().relative_to(project_root.resolve()).as_posix()
             self._send_json({"ok": True, "path": rel, "file": fname})
+
+        def _handle_open_folder(self):
+            import os
+            import subprocess
+            length = int(self.headers.get("Content-Length", "0") or "0")
+            try:
+                payload = json.loads(self.rfile.read(length).decode("utf-8")) if length else {}
+            except Exception as exc:
+                self._send_json({"error": f"bad json: {exc}"}, 400)
+                return
+            rel = str(payload.get("path") or "").strip()
+            if not rel:
+                self._send_json({"error": "missing path"}, 400)
+                return
+            target = (project_root / rel).resolve()
+            try:
+                target.relative_to(project_root.resolve())
+            except ValueError:
+                self._send_json({"error": "只能打开项目目录内的文件夹"}, 403)
+                return
+            if target.is_file():
+                target = target.parent
+            if not target.exists():
+                target.mkdir(parents=True, exist_ok=True)
+            if os.name == "nt":
+                subprocess.Popen(["explorer", str(target)])
+            else:
+                subprocess.Popen(["xdg-open", str(target)])
+            self._send_json({"ok": True, "path": str(target)})
 
         def _handle_import(self):
             """接收 base64 图片，存进 candidates/<角色>/<时期目录>/导入/round-01/，再重建 manifest。
