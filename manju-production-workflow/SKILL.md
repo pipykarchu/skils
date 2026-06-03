@@ -17,7 +17,7 @@ description: Use when the user wants to run an end-to-end 0-1 AI 漫剧 producti
 - 用 `changjingmeishu` 把反复出现的场景、子场景和关键道具锁定成参考图与 `scene-anchors.json`；默认与定妆造共用同一个 `视觉定版评审` 网页。
 - 用 `script-to-storyboard` 拆分镜，生成 Excel/Markdown 分镜脚本，统一放入 `06_分镜表`。
 - 用 `storyboard-image-prompts` 根据剧本、角色设定和分镜脚本生成 AI 生图提示词，统一放入 `07_绘图提示词`，并确保全篇角色、画风、镜头语言一致。
-- 用 `renjingheyi` 读取人物三视图、场景/道具定版和 `07_绘图提示词`，逐镜融合生成最终镜头图。
+- 用 `renjingheyi` 读取人物三视图、场景/道具定版和 `07_绘图提示词`，不重写原始主提示词，逐镜融合生成最终镜头图，并把 `confirmedShots` 交接给视频生成。
 - 用 `manju-workflow-dashboard` 把 0-1 流程做成可演示、可复盘、可验收的本地网页看板。
 
 ## 默认规则
@@ -31,6 +31,7 @@ description: Use when the user wants to run an end-to-end 0-1 AI 漫剧 producti
 - 每次只推进一个明确阶段，阶段完成后给出下一步建议和成功标志。
 - 统一 `视觉定版评审` 网页不在中栏顶部放“导入图”按钮；顶部使用 `竖版 / 横版` 画幅调节，默认候选区以四个小卡片展示，空的 Gemini/Image2/Midjourney 候选也按四小卡占位并可点击标记生成意图。
 - 渠道命名统一：`MJ` 只是 `Midjourney` 的简称/别名，manifest、网页行标题、流程看板和提示词包中不要把 `MJ` 与 `Midjourney` 拆成两个渠道；如遇历史数据里的 `MJ`，合并到 `Midjourney`。
+- 人景合一只消费既有提示词：阶段 6.5 必须原样读取 `07_绘图提示词` 的主提示词；若提示词有问题，回到 `storyboard-image-prompts` 修正，不在 `renjingheyi` 内临场重写。
 
 ## 引擎分工（Codex × Claude 协作）
 
@@ -141,7 +142,7 @@ description: Use when the user wants to run an end-to-end 0-1 AI 漫剧 producti
 | 5 | 场景美术 | `changjingmeishu` | 世界观、分镜、已锁人物 | `08_生成图片/视觉定版评审/`、`02_世界观/视觉定版/场景|道具/`、`scene-anchors.json` | 场景空间锚点、道具参考已锁 |
 | 6 | 剧本转分镜 | `script-to-storyboard` | 剧本、角色档案 | `06_分镜表/第XX集_分镜脚本.md/xlsx` | 每镜画面、时长、景别、运镜明确 |
 | 7 | 分镜生图提示词 | `storyboard-image-prompts` | 剧本、分镜、角色/场景锚点 | `07_绘图提示词/第XX集_生图提示词.md` | 每镜提示词可批量出图 |
-| 8 | 人景合一镜头图 | `renjingheyi` | 人物三视图、场景/道具定版、`07_绘图提示词` | `10_镜头图/`、`shot-manifest.json`、`selection-state.json` | 每镜有确认镜头图 |
+| 8 | 人景合一镜头图 | `renjingheyi` | 人物三视图、场景/道具定版、`07_绘图提示词` | `10_镜头图/`、`shot-manifest.json`、`selection-state.json.confirmedShots` | 每镜有确认镜头图 |
 | 9 | 视频片段与成片 | `manju-production-workflow` 内联执行 | `10_镜头图/`、分镜时长、运镜 | `11_视频片段/`、`12_成片/` | 镜头动起来，字幕/配音/音效合成 |
 | 10 | 质检验收 | `manju-production-workflow` + Claude 审查 | 成片、剧本、分镜、提示词 | `08_成片检查/` | 剧情、角色、道具、预算、安全区通过 |
 | 11 | 流程看板 | `manju-workflow-dashboard` | 项目文件、SOP、成片状态 | `01_生产SOP/workflow_dashboard.html` | 面试/复盘能一眼讲清流程 |
@@ -478,9 +479,21 @@ SOP 必须包含：
 2. 场景/道具已锁：`02_世界观/视觉定版/scene-anchors.json`
 3. 分镜提示词已生成：`07_绘图提示词/第XX集_*.md`
 
+流程：
+
+1. **构建逐镜 manifest**：运行 `build_shot_manifest.py`，从 `07_绘图提示词` 原样取 `主提示词`，从分镜表兜底补景别/运镜/时长/台词，自动匹配人物三视图和 `scene-anchors.json`。
+2. **校正低置信匹配**：检查 `shot-manifest.json` 里的 `needsReview`、`refs`、`matchConfidence`，缺人物/场景/道具时先人工补齐，不急着出图。
+3. **干跑融合命令**：运行 `fuse_shots.py --dry-run`，只打印每镜将上传的参考图和提示词，不调用 API。
+4. **授权后生成候选**：用户确认额度和上传风险后，再用多参考图模型生成候选，写入 `10_镜头图/candidates/第XX集/<镜号>/` 并回填 manifest。
+5. **逐镜评审确认**：打开 `fusion_gallery_server.py` 或统一 `视觉定版评审` 的人景合一页，按镜头 ❤️ 心仪、确认最终镜头图。
+6. **交接视频阶段**：把 `selection-state.json.confirmedShots` 和 `final/第XX集/<镜号>.png` 作为阶段 7 的镜头基准图。
+
 输出到：
 
 ```text
+<项目名>/10_镜头图/build_shot_manifest.py
+<项目名>/10_镜头图/fuse_shots.py
+<项目名>/10_镜头图/fusion_gallery_server.py
 <项目名>/10_镜头图/shot-manifest.json
 <项目名>/10_镜头图/selection-state.json
 <项目名>/10_镜头图/candidates/第XX集/<镜号>/*.png
@@ -492,7 +505,8 @@ SOP 必须包含：
 - 每个分镜镜号都有 manifest 条目和候选图。
 - `prompt` 字段与 `07_绘图提示词` 原文一致，未被重写。
 - 人物、场景、道具参考图匹配正确，低置信项已人工确认。
-- 确认镜头图符合分镜景别、构图和年代，不换脸、不乱场景。
+- `selection-state.json.confirmedShots` 中每镜都有最终候选或明确的待补原因。
+- 确认镜头图符合分镜景别、构图和年代，不换脸、不乱场景，无文字水印，竖屏 9:16 或项目指定画幅正确。
 
 ### 阶段 7：视频生成
 
@@ -561,7 +575,7 @@ $manju-production-workflow 检查第1集剧本、分镜和生图提示词是否�
 - 交给 `changjingmeishu` 前，提供世界观文件路径、全量分镜路径、已锁人物目录、目标输出 `02_世界观/视觉定版/`。
 - 交给 `script-to-storyboard` 前，提供剧本文件路径、片段名称、角色档案路径和 `06_分镜表` 输出目录。
 - 交给 `storyboard-image-prompts` 前，提供剧本文件路径、分镜脚本路径、角色档案路径、角色固定提示词路径、前集提示词路径和 `07_绘图提示词` 输出目录。
-- 交给 `renjingheyi` 前，确认人物三视图、`scene-anchors.json`、`07_绘图提示词` 已存在，并提供集数、输出 `10_镜头图/`。
+- 交给 `renjingheyi` 前，确认人物三视图、`scene-anchors.json`、`07_绘图提示词` 已存在，并提供集数、项目根目录、`06_分镜表` 兜底路径、输出 `10_镜头图/`；强调 `prompt` 必须原样来自 `07_绘图提示词`，先 dry-run 再授权实跑，生成后的 `confirmedShots` 交接阶段 7。
 - 交给 `manju-workflow-dashboard` 前，提供项目根目录、当前成片目标、平台路线和验收自检要求。
 - 子 skill 生成文件后，更新 `项目状态.md`。
 

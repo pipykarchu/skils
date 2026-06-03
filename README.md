@@ -32,7 +32,7 @@ C:\Users\Administrator\.codex\skills\screenplay-director\SKILL.md
 | `storyboard-image-prompts` | 想根据剧本、世界观、分镜表、角色档案或漫剧短剧分镜生成 AI 绘图提示词，并按人物、场景、世界观规则、连续性和生产平台选择合适模型时使用。 | `$storyboard-image-prompts 根据这份剧本、世界观和分镜表生成绘图提示词，并推荐每镜使用的平台和模型` |
 | `dingzhuangzao` | 想做漫剧角色定妆、角色三视图候选、Gemini/Image2/MJ 提示词、统一视觉评审网页、多选标心、锁脸/身体/衣服/发型、软删除、双击看大图、左栏平台 Key 本地保存、下一版三视图生成和总览拼图时使用。它会先读取世界观、年代设定、场景和角色资料，服装造型必须贴合项目设定。 | `$dingzhuangzao 读取这个漫剧项目的世界观和角色设定，给每个角色时期生成三视图定妆候选并做统一视觉评审页` |
 | `changjingmeishu` | 想锁定漫剧场景美术、场地/子场景/关键道具参考图、氛围/色调/构图/建筑倾向、同一空间不同角度/时段/天气一致性，或把场景/道具模块并入定妆造同一个视觉评审网页并生成 `scene-anchors.json` 时使用。 | `$changjingmeishu 根据这个项目的世界观和分镜，把核心场景和关键道具并入统一视觉评审页` |
-| `renjingheyi` | 想把已锁定的人物三视图、场景/道具参考图和 `07_绘图提示词` 逐镜融合成最终镜头图，并用网页评审确认镜头图时使用。 | `$renjingheyi 读取第1集提示词、人物三视图和场景定版，逐镜生成人景合一镜头图` |
+| `renjingheyi` | 想把已锁定的人物三视图、场景/道具参考图和 `07_绘图提示词` 原样逐镜融合成最终镜头图，并用网页评审确认 `confirmedShots` 时使用。 | `$renjingheyi 读取第1集提示词、人物三视图和场景定版，逐镜生成人景合一镜头图` |
 | `manju-production-workflow` | 想从 0 到 1 做完整漫剧生产流水线时使用。它会协调 PRD、SOP、剧本、角色定妆、场景美术、分镜、绘图提示词、人景合一镜头图、视频生成、质检和流程看板；支持 Codex×Claude 按阶段分工。 | `$manju-production-workflow 启动漫剧项目《重生后我不再忍了》，题材都市复仇，30集，每集60秒` |
 | `manju-workflow-dashboard` | 想把漫剧生产流程做成面试演示用本地 HTML 网页看板，展示项目信息、ComfyUI式节点脑图、平台选择、操作步骤、成片验收和自检时使用。 | `$manju-workflow-dashboard 给这个漫剧项目生成皮玺玉风格 ComfyUI 节点工作流看板` |
 
@@ -65,7 +65,7 @@ README 就是本仓库的本地索引。完整漫剧项目从故事到成片，�
 | 4 | 分镜 | Codex + Claude 审查 | `script-to-storyboard` |
 | 5 | 生图提示词 | Claude 定一致性 + Codex 格式化 | `storyboard-image-prompts` |
 | 6 | 质检 | Claude | 总控落盘 |
-| 6.5 新 | 人景合一镜头图 | Codex 构建 manifest + Claude 审查 | `renjingheyi` |
+| 6.5 新 | 人景合一镜头图 | Codex 构建 manifest + Claude 审查 | `renjingheyi`，原样消费 `07_绘图提示词`，产出 `confirmedShots` |
 | 7 新 | 视频生成 | Claude 运镜/审查 + Codex 调 API/合成 | 内联（外部生视频 API / FFmpeg / 剪映） |
 | 8 | 流程看板 | Codex | `manju-workflow-dashboard` |
 
@@ -78,7 +78,7 @@ README 就是本仓库的本地索引。完整漫剧项目从故事到成片，�
 5. `changjingmeishu`：场景美术、关键道具、空间锚点、`scene-anchors.json`。
 6. `script-to-storyboard`：剧本转分镜。
 7. `storyboard-image-prompts`：分镜生图提示词。
-8. `renjingheyi`：人物、场景、道具逐镜融合成镜头图。
+8. `renjingheyi`：人物、场景、道具逐镜融合成镜头图，原样消费 `07_绘图提示词` 并产出 `confirmedShots`。
 9. `manju-production-workflow`：视频片段、成片合成、质检验收。
 10. `manju-workflow-dashboard`：流程看板、面试演示、复盘。
 
