@@ -65,6 +65,7 @@ header .head-right{display:flex;align-items:center;gap:12px}
 .mode-tab{height:30px;padding:0 14px;border:0;border-radius:7px;background:transparent;color:var(--muted);font:inherit;font-size:13px;cursor:pointer}
 .mode-tab:hover{color:var(--ink);background:var(--nav-hover)}
 .mode-tab.active{background:var(--accent);color:#fff}
+.mode-tab.external::after{content:"↗";font-size:11px;margin-left:5px;opacity:.72}
 .theme-toggle{width:34px;height:34px;border:1px solid var(--line);border-radius:7px;background:var(--panel);
   cursor:pointer;font-size:16px;line-height:1;color:var(--ink)}
 .theme-toggle:hover{border-color:var(--accent)}
@@ -258,6 +259,7 @@ header .head-right{display:flex;align-items:center;gap:12px}
     <div class="mode-tabs" id="modeTabs">
       <button class="mode-tab active" data-mode="casting">定妆造</button>
       <button class="mode-tab" data-mode="scene">场景美术</button>
+      <button class="mode-tab external" data-mode="fusion">人景合一</button>
     </div>
   </div>
   <div class="head-right">
@@ -293,6 +295,7 @@ let MANIFEST = null;
 let STATE = loadState();
 let CUR = {role:null, state:null};
 let ACTIVE_MODE = localStorage.getItem("visualReviewMode") || "casting";
+if(!["casting","scene"].includes(ACTIVE_MODE)) ACTIVE_MODE = "casting";
 let CARD_FORMAT = localStorage.getItem(CARD_FORMAT_KEY) || "portrait";
 let PICK_FINAL = null;   // 正在为哪个时期点选最终（key 或 null）
 let CARD_CLICK_TIMER = null;
@@ -346,6 +349,10 @@ function initModeTabs(){
   document.querySelectorAll(".mode-tab").forEach(btn=>{
     btn.classList.toggle("active", btn.dataset.mode===ACTIVE_MODE);
     btn.onclick=()=>{
+      if(btn.dataset.mode==="fusion"){
+        window.open("http://127.0.0.1:8792/", "_blank");
+        return;
+      }
       ACTIVE_MODE = btn.dataset.mode;
       localStorage.setItem("visualReviewMode", ACTIVE_MODE);
       document.querySelectorAll(".mode-tab").forEach(b=>b.classList.toggle("active", b.dataset.mode===ACTIVE_MODE));
@@ -484,7 +491,7 @@ function renderStage(){
   const rowsHtml = groups.map(g=>{
     const eng = (g.engine||"");
     const lowEng = eng.toLowerCase();
-    const engClass = lowEng.includes("mj") ? "mj" : (lowEng.includes("gemini") ? "gemini" : (eng==="导入" ? "imp" : "image2"));
+    const engClass = (lowEng.includes("midjourney") || lowEng==="mj") ? "mj" : (lowEng.includes("gemini") ? "gemini" : (eng==="导入" ? "imp" : "image2"));
     const hasImg = g.images && g.images.length;
     const cards = (g.images||[]).map(img=>cardHtml(role, st, g, img)).join("");
     let inner;
@@ -692,15 +699,19 @@ function toggleLock(k, kind, id){
 }
 
 function normalizeGroups(st){
-  // 顺序：导入（若有）→ Gemini Image → Image2 → MJ → 其余
+  // 顺序：导入（若有）→ Gemini Image → Image2 → Midjourney → 其余；MJ 只作为 Midjourney 别名，不单独补行
   const gs = st.groups || [];
   const find = (frag)=>gs.find(g=>(g.engine||"").toLowerCase().includes(frag));
+  const findMidjourney = ()=>gs.find(g=>{
+    const e=(g.engine||"").toLowerCase();
+    return e==="mj" || e.includes("midjourney");
+  });
   const imp = gs.find(g=>(g.engine||"")==="导入");
   const characterMode = isCharacterRole(CUR.role);
   const defaultLabel = characterMode ? "三视图候选" : "候选";
   const gemini = find("gemini") || {engine:"Gemini Image", label:characterMode ? "下一版/图生图默认三视图" : "下一版/图生图默认候选", images:[]};
   const i2 = find("image2") || {engine:"Image2", label:defaultLabel, images:[]};
-  const mj = find("mj") || {engine:"MJ", label:defaultLabel, images:[]};
+  const mj = findMidjourney() || {engine:"Midjourney", label:defaultLabel, images:[]};
   const rest = gs.filter(g=>g!==i2 && g!==mj && g!==imp && g!==gemini);
   return [...(imp?[imp]:[]), gemini, i2, mj, ...rest];
 }
@@ -740,7 +751,7 @@ function renderAside(){
         <div class="phead"><span class="eng gemini">Gemini Image</span><button class="copy" data-copy="gemini">复制</button></div>
         <pre class="ptext" data-pt="gemini">${esc(pr.gemini)}</pre></div>`:""}
       ${pr.mj?`<div class="pgroup">
-        <div class="phead"><span class="eng mj">MJ</span><button class="copy" data-copy="mj">复制</button></div>
+        <div class="phead"><span class="eng mj">Midjourney</span><button class="copy" data-copy="mj">复制</button></div>
         <pre class="ptext" data-pt="mj">${esc(pr.mj)}</pre></div>`:""}
     </div>` : `
     <div class="prompt-block"><h3>定妆提示词</h3>
