@@ -337,6 +337,7 @@ header .head-right{display:flex;align-items:center;gap:12px}
 <script>
 const STATE_KEY = "castingState_v2";
 const CARD_FORMAT_KEY = "visualReviewCardFormat";
+const MIDJOURNEY_EXTERNAL_URL = "https://mj1mage.zeabur.app/";
 let MANIFEST = null;
 let FUSION = null;
 let PREVIEW = null;
@@ -649,11 +650,13 @@ function fusionUploadCard(s, ref){
   const folder = path ? path.split("/").slice(0,-1).join("/") : "08_生成图片/角色三视图";
   const img = path ? `<img src="${refAsset(path)}" alt="${esc(title)}" data-lightbox-src="${refAsset(path)}" data-lightbox-title="${esc(title)}">`
     : `<div class="ph">上传人物三视图<br>${esc(title)}</div>`;
+  const del = uploaded&&uploaded.path ? `<button class="mini-btn" data-delete-upload="role::${esc(title)}">删除上传图</button>` : "";
   return `<article class="fusion-card" data-upload-kind="role" data-upload-name="${esc(title)}">
     <div class="imgwrap">${img}</div>
     <div class="meta"><b title="${esc(title)}">${esc(title)}</b>
       <button class="mini-btn" data-open-folder="${esc(folder)}">打开三视图文件夹</button>
       <button class="mini-btn" data-upload-trigger="role::${esc(title)}">上传/替换三视图</button>
+      ${del}
       <input type="file" accept="image/*" hidden data-upload-input="role::${esc(title)}">
     </div>
   </article>`;
@@ -667,12 +670,14 @@ function fusionSceneCard(s, idx){
   const folder = path ? path.split("/").slice(0,-1).join("/") : "08_生成图片/场景美术";
   const img = path ? `<img src="${refAsset(path)}" alt="${esc(title)}" data-lightbox-src="${refAsset(path)}" data-lightbox-title="${esc(title)}">`
     : `<div class="ph">上传场景图候选 ${idx+1}<br>作为镜头合成环境</div>`;
+  const del = uploaded&&uploaded.path ? `<button class="mini-btn" data-delete-upload="scene::${esc(slot)}">删除上传图</button>` : "";
   return `<article class="fusion-card scene" data-upload-kind="scene" data-upload-name="${esc(slot)}">
     <div class="imgwrap">${img}</div>
     <div class="meta"><b>场景图候选 ${idx+1}</b>
       <span>${esc(title)}</span>
       <button class="mini-btn" data-open-folder="${esc(folder)}">打开场景图文件夹</button>
       <button class="mini-btn" data-upload-trigger="scene::${esc(slot)}">上传/替换场景图</button>
+      ${del}
       <input type="file" accept="image/*" hidden data-upload-input="scene::${esc(slot)}">
     </div>
   </article>`;
@@ -732,7 +737,6 @@ function renderFusionStage(){
           <label class="format-picker">画幅
             <select id="fusionGenerationAspect">${aspectOptions}</select>
           </label>
-          <button class="btn primary" id="fusionGenerateBtn">根据分镜生成镜头图候选</button>
         </div>
       </div>
       <div class="cards">${cands}</div>
@@ -754,6 +758,7 @@ function bindFusionStage(stage, s){
     const input = stage.querySelector(`[data-upload-input="${btn.dataset.uploadTrigger}"]`);
     if(input) input.click();
   });
+  stage.querySelectorAll("[data-delete-upload]").forEach(btn=>btn.onclick=()=>deleteFusionUpload(btn.dataset.deleteUpload, s));
   stage.querySelectorAll("[data-open-folder]").forEach(btn=>btn.onclick=()=>openProjectFolder(btn.dataset.openFolder));
   stage.querySelectorAll("[data-upload-input]").forEach(input=>input.onchange=()=>handleFusionUpload(input, s));
   stage.querySelectorAll("[data-lightbox-src]").forEach(img=>img.ondblclick=()=>openLightbox(img.dataset.lightboxSrc, img.dataset.lightboxTitle||""));
@@ -771,10 +776,6 @@ function bindFusionStage(stage, s){
   if(mode) mode.onchange=()=>{ fusionNote(s.no).replaceMode=mode.value; persistFusion(); renderAside(); };
   const aspect = stage.querySelector("#fusionGenerationAspect");
   if(aspect) aspect.onchange=()=>{ fusionNote(s.no).generationAspect=aspect.value; persistFusion(); renderStage(); };
-  stage.querySelector("#fusionGenerateBtn").onclick=()=>{
-    FUSION_STATE.genRequests[s.no]={shotNo:s.no, aspect:fusionNote(s.no).generationAspect || "portrait", replacementMode:fusionNote(s.no).replaceMode || (s.replaceMode&&s.replaceMode.default) || "compose", requestedAt:new Date().toISOString()};
-    persistFusion(); fusionSave(null, "已记录生成镜头图请求；真正调用生图前还需要你确认额度和上传风险");
-  };
   stage.querySelector("#fusionNextRound").onclick=()=>{ fusionNote(s.no).nextRound=true; persistFusion(); fusionSave(null, "已记录进入下一版"); };
   stage.querySelector("#fusionConfirmShot").onclick=()=>{
     if(FUSION_STATE.finals[s.no]) delete FUSION_STATE.finals[s.no];
@@ -802,6 +803,19 @@ async function handleFusionUpload(input, shot){
     FUSION_STATE.sceneInputs[shot.no][name]={path:out.path, name:file.name};
   }
   persistFusion(); renderStage(); fusionSave(null, "已上传并保存到本地");
+}
+async function deleteFusionUpload(key, shot){
+  const [kind, name] = key.split("::");
+  const store = kind==="role" ? FUSION_STATE.uploadedRefs : FUSION_STATE.sceneInputs;
+  const item = store && store[shot.no] && store[shot.no][name];
+  if(!item || !item.path){ toast("没有可删除的上传图"); return; }
+  if(!confirm("只删除本页上传的本地图片，不会删除锁定参考图。确认删除吗？")) return;
+  const res = await fetch("/api/delete-upload",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({path:item.path})});
+  const out = await res.json().catch(()=>({}));
+  if(!res.ok){ toast(out.error||"删除失败"); return; }
+  delete store[shot.no][name];
+  persistFusion(); renderStage(); fusionSave(null, "已删除上传图并保存");
 }
 async function openProjectFolder(folder){
   const res = await fetch("/api/open-folder",{method:"POST",headers:{"Content-Type":"application/json"},
@@ -839,8 +853,9 @@ function renderStage(){
     } else {
       // 空的 Image2/MJ 行：默认展示 4 个候选小卡，点击记录待生成意图
       const marked = (STATE.gen&&STATE.gen[`${k}::${eng}`]);
+      const emptyActionText = isMidjourneyEngine(eng) ? '＋ 单击标记 / 双击打开 MJimage' : '＋ 单击标记 / 双击生成';
       const slots = [1,2,3,4].map(n=>`<article class="gen-slot gen-card ${marked?'marked':''}" data-gen-engine="${esc(eng)}" data-gen-slot="${n}">
-        <div class="imgwrap"><div class="ph">${marked?markedText:'＋ 单击标记 / 双击生成'}<br>${esc(eng)} ${candidateLabel} ${n}</div></div>
+        <div class="imgwrap"><div class="ph">${marked?markedText:emptyActionText}<br>${esc(eng)} ${candidateLabel} ${n}</div></div>
         <div class="meta">${esc((eng||'candidate').toLowerCase().replace(/\s+/g,'-'))}-${characterMode?'threeview':'candidate'}-${n}</div>
       </article>`).join("");
       inner = `<div class="cards">${slots}</div>`;
@@ -893,9 +908,17 @@ function renderStage(){
       uploadImageToImageSlot(c, role, st);
     };
   });
+  stage.querySelectorAll("[data-external-midjourney]").forEach(c=>{
+    c.onclick=(e)=>{
+      e.preventDefault();
+      if(PICK_FINAL===k) return;
+      openMidjourneyExternal(role, st);
+    };
+  });
   stage.querySelectorAll(".card").forEach(c=>{
     if(c.classList.contains("gen-slot")) return;
     if(c.dataset.uploadSlot) return;
+    if(c.dataset.externalMidjourney) return;
     c.onclick=()=>{
       if(PICK_FINAL!==k) return;
       clearTimeout(CARD_CLICK_TIMER);
@@ -950,6 +973,11 @@ function isImageToImageEngine(engine){
   return String(engine||"").includes("图生图") || text.includes("img2img") || text.includes("image-to-image");
 }
 
+function isMidjourneyEngine(engine){
+  const text = String(engine||"").toLowerCase();
+  return text==="mj" || text.includes("midjourney");
+}
+
 async function refreshManifestAndRender(){
   MANIFEST = await (await fetch("/api/manifest")).json();
   renderNav(); renderStage(); renderAside(); renderProgress(); renderOverview();
@@ -1000,12 +1028,23 @@ async function uploadImageToImageSlot(card, role, st){
   }
 }
 
+async function openMidjourneyExternal(role, st){
+  const prompt = (st.prompts && (st.prompts.mj || st.prompts.image2 || st.prompts.gemini || st.prompts.base)) || `${role.name} ${st.name}`;
+  try{
+    await navigator.clipboard.writeText(prompt);
+    toast("已复制 Midjourney 提示词，正在打开 MJimage");
+  }catch(e){
+    toast("正在打开 MJimage，请手动复制右侧 Midjourney 提示词");
+  }
+  window.open(MIDJOURNEY_EXTERNAL_URL, "_blank", "noopener,noreferrer");
+}
+
 async function generateSlot(el, role, st, k){
   const engine = el.dataset.genEngine || "";
   const slot = Number(el.dataset.genSlot || 1);
   const low = engine.toLowerCase();
   if(low.includes("midjourney") || low==="mj"){
-    toast("Midjourney 当前作为手动渠道，请复制提示词生成");
+    await openMidjourneyExternal(role, st);
     return;
   }
   const ok = confirm(`双击会真实调用出图接口并消耗额度。\n\n生成：${role.name} / ${st.name}\n渠道：${engine} 第 ${slot} 张\n\n继续吗？`);
@@ -1093,20 +1132,21 @@ function cardHtml(role, st, group, img, slot){
   const k = keyOf(role.name, st.name);
   const locks = (STATE.locks||{})[k] || {};
   const uploadable = !img.path && isImageToImageEngine(group.engine);
+  const externalMidjourney = !img.path && isMidjourneyEngine(group.engine);
   // 单选最终：finals[k] 存被选中的那张 id
   const isFinal = STATE.finals[k] === id;
   const pickable = (PICK_FINAL===k && liked);
   const inner = img.path
     ? `<img src="/asset/${encodeURI(img.path)}" alt="${esc(id)}" loading="lazy">`
-    : `<div class="ph">${uploadable?'＋ 点击上传图生图参考':'占位'}<br>${esc(img.note||id)}</div>`;
-  const lockButtons = uploadable ? "" : lockOptionsForRole(role.name).map(opt =>
+    : `<div class="ph">${uploadable?'＋ 点击上传图生图参考':(externalMidjourney?'＋ 点击打开 MJimage':'占位')}<br>${esc(img.note||id)}</div>`;
+  const lockButtons = (uploadable || externalMidjourney) ? "" : lockOptionsForRole(role.name).map(opt =>
     `<button class="lockbtn ${locks[opt.kind]===id?'active':''}" data-kind="${esc(opt.kind)}" data-id="${esc(id)}" title="${esc(opt.title)}">${esc(opt.label)}</button>`
   ).join("");
-  return `<article class="card ${liked?'liked':''} ${isFinal?'final':''} ${pickable?'pickable':''}" data-id="${esc(id)}" data-src="${img.path?('/asset/'+encodeURI(img.path)):''}" ${uploadable?`data-upload-slot="${slot||1}" data-upload-engine="${esc(group.engine||'图生图')}"`:''}>
+  return `<article class="card ${liked?'liked':''} ${isFinal?'final':''} ${pickable?'pickable':''}" data-id="${esc(id)}" data-src="${img.path?('/asset/'+encodeURI(img.path)):''}" ${uploadable?`data-upload-slot="${slot||1}" data-upload-engine="${esc(group.engine||'图生图')}"`:''} ${externalMidjourney?`data-external-midjourney="${slot||1}"`:''}>
     <div class="locks">${lockButtons}</div>
-    ${uploadable?'':`<button class="heart" data-id="${esc(id)}" title="心仪">${liked?'❤':'♡'}</button>`}
+    ${(uploadable || externalMidjourney)?'':`<button class="heart" data-id="${esc(id)}" title="心仪">${liked?'❤':'♡'}</button>`}
     <div class="imgwrap">${inner}</div>
-    ${uploadable?'':`<button class="delete-img" data-id="${esc(id)}" type="button" title="从评审中移除">删除</button>`}
+    ${(uploadable || externalMidjourney)?'':`<button class="delete-img" data-id="${esc(id)}" type="button" title="从评审中移除">删除</button>`}
     <div class="meta"><span>${esc(id)}</span><span class="finaltag">最终</span></div>
   </article>`;
 }
@@ -1624,6 +1664,9 @@ def make_handler(manifest_path: Path, output_path: Path):
             if path == "/api/open-folder":
                 self._handle_open_folder()
                 return
+            if path == "/api/delete-upload":
+                self._handle_delete_upload()
+                return
             if path == "/api/import":
                 self._handle_import()
                 return
@@ -2023,6 +2066,30 @@ def make_handler(manifest_path: Path, output_path: Path):
             else:
                 subprocess.Popen(["xdg-open", str(target)])
             self._send_json({"ok": True, "path": str(target)})
+
+        def _handle_delete_upload(self):
+            length = int(self.headers.get("Content-Length", "0") or "0")
+            try:
+                payload = json.loads(self.rfile.read(length).decode("utf-8")) if length else {}
+            except Exception as exc:
+                self._send_json({"error": f"bad json: {exc}"}, 400)
+                return
+            rel = str(payload.get("path") or "").strip()
+            if not rel:
+                self._send_json({"error": "missing path"}, 400)
+                return
+            target = (project_root / rel).resolve()
+            upload_root = (fusion_dir / "uploads").resolve()
+            try:
+                target.relative_to(upload_root)
+            except ValueError:
+                self._send_json({"error": "只能删除 10_镜头图/uploads 内的上传图"}, 403)
+                return
+            if target.exists() and target.is_file():
+                target.unlink()
+                self._send_json({"ok": True, "deleted": str(target)})
+                return
+            self._send_json({"ok": True, "deleted": False})
 
         def _handle_import(self):
             """接收 base64 图片，存进 candidates/<角色>/<时期目录>/导入/round-01/，再重建 manifest。
