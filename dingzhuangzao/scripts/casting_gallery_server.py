@@ -82,6 +82,8 @@ header .head-right{display:flex;align-items:center;gap:12px}
 .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
 .btn.primary:hover{filter:brightness(1.05)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
+.next-engine-picker{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 10px;border:1px solid var(--line);border-radius:7px;background:var(--panel);font-size:12px;color:var(--muted)}
+.next-engine-picker select{height:26px;border:1px solid var(--line);border-radius:6px;background:var(--slot-bg);color:var(--ink);font:inherit;font-size:12px}
 
 .layout{display:grid;grid-template-columns:268px 1fr 320px;gap:0;height:calc(100vh - 59px)}
 @media(max-width:1180px){.layout{grid-template-columns:240px 1fr}.aside-right{display:none}}
@@ -343,6 +345,7 @@ header .head-right{display:flex;align-items:center;gap:12px}
 const STATE_KEY = "castingState_v2";
 const CARD_FORMAT_KEY = "visualReviewCardFormat";
 const MIDJOURNEY_EXTERNAL_URL = "https://mj1mage.zeabur.app/";
+const NEXT_ROUND_MODELS = ["Image2","Nano Banana Pro","Gemini Image","Midjourney","即梦_Seedream"];
 let MANIFEST = null;
 let FUSION = null;
 let PREVIEW = null;
@@ -375,6 +378,9 @@ function autosave(){ persist(); save(null, null, true); }
 
 function keyOf(role, state){ return role + "::" + state; }
 function esc(s){ return String(s??"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function nextRoundModelOptions(selected){
+  return NEXT_ROUND_MODELS.map(m=>`<option value="${esc(m)}" ${m===selected?'selected':''}>${esc(m)}</option>`).join("");
+}
 function toast(msg){ const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show");
   clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"),1800); }
 
@@ -850,7 +856,8 @@ function renderStage(){
   const notes = STATE.notes[k] || {};
   const characterMode = isCharacterRole(role.name);
   const candidateLabel = characterMode ? "三视图候选" : "候选";
-  const markedText = characterMode ? "已标记待生成 ✓（默认 Gemini Image，保存后由 AI 生成三视图）" : "已标记待生成 ✓（默认 Gemini Image，保存后由 AI 出图）";
+  const selectedNextEngine = notes.nextEngine || (characterMode ? "Image2" : "Nano Banana Pro");
+  const markedText = characterMode ? "已标记待生成 ✓（按所选模型生成三视图）" : "已标记待生成 ✓（按所选模型出图）";
 
   const rowsHtml = groups.map(g=>{
     const eng = (g.engine||"");
@@ -900,6 +907,10 @@ function renderStage(){
       <label>调整提示词（下一版方向）
         <textarea data-field="adjustments">${esc(notes.adjustments||"")}</textarea></label>
       <div class="state-actions">
+        <label class="next-engine-picker" title="选择点击进入下一版后，由哪个模型生成下一版">
+          下一版模型
+          <select id="nextEngineSelect">${nextRoundModelOptions(selectedNextEngine)}</select>
+        </label>
         <button class="btn" id="nextRound">${characterMode?"进入下一版（三视图）":"进入下一版"}</button>
         <button class="btn primary" id="confirmLook">${STATE.finals[k]?"已确认（取消）":(picking?"点选最终中…":"确认此时期造型")}</button>
       </div>
@@ -953,7 +964,7 @@ function renderStage(){
         STATE.gen = STATE.gen||{}; STATE.gen[gk] = !STATE.gen[gk];
         if(!STATE.gen[gk]) delete STATE.gen[gk];
         autosave(); renderStage();
-        toast(STATE.gen[gk]?"已标记待生成，默认 Gemini Image 补图":"已取消标记");
+        toast(STATE.gen[gk]?`已标记待生成：${el.dataset.genEngine} 补图`:"已取消标记");
       }, 220);
     };
     el.ondblclick=(e)=>{
@@ -971,17 +982,27 @@ function renderStage(){
   stage.querySelectorAll(".notes textarea").forEach(t=>t.oninput=()=>{
     STATE.notes[k] = STATE.notes[k]||{}; STATE.notes[k][t.dataset.field]=t.value; persist();
   });
+  const nextEngineSelect = document.getElementById("nextEngineSelect");
+  if(nextEngineSelect){
+    nextEngineSelect.onchange=()=>{
+      STATE.notes[k]=STATE.notes[k]||{};
+      STATE.notes[k].nextEngine=nextEngineSelect.value;
+      persist();
+      toast(`下一版模型已切换为 ${nextEngineSelect.value}`);
+    };
+  }
   document.getElementById("confirmLook").onclick=()=>onConfirm(role,st,k);
   document.getElementById("nextRound").onclick=()=>{
     STATE.notes[k]=STATE.notes[k]||{};
     STATE.notes[k].nextRound=true;
-    STATE.notes[k].nextEngine="Gemini Image";
+    const engine = nextEngineSelect ? nextEngineSelect.value : (STATE.notes[k].nextEngine || (characterMode ? "Image2" : "Nano Banana Pro"));
+    STATE.notes[k].nextEngine=engine;
     STATE.notes[k].nextOutputType=characterMode ? "character_turnaround_3view" : "visual_candidate";
-    STATE.notes[k].generationStatus="下一版待生成";
+    STATE.notes[k].generationStatus=`${engine} 下一版待生成`;
     STATE.notes[k].generationRequestedAt=new Date().toISOString();
     autosave();
     renderStage(); renderNav(); renderOverview();
-    toast(characterMode ? "已标记『进入下一版』：默认 Gemini Image 生成三视图" : "已标记『进入下一版』：默认 Gemini Image 生成 4 张");
+    toast(characterMode ? `已标记『进入下一版』：${engine} 生成三视图` : `已标记『进入下一版』：${engine} 生成 4 张`);
   };
 }
 

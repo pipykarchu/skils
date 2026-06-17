@@ -136,3 +136,10 @@ python casting_gallery_server.py --manifest manifest.json --out selection-state.
 - API key 只从环境变量读，绝不写进项目。
 - 本地评审服务器占用 localhost 端口直到停止。
 - 文件写入不覆盖用户原稿，需改动追加版本/时间戳。
+
+## 2026-06 unified review addendum
+
+- When scene art is reviewed together with character casting, keep everything in the same `08_生成图片/视觉定版评审/` page and manifest. Do not split scene art onto a separate webpage unless the user asks for it.
+- `进入下一版` in the unified page must expose the target engine in the UI and persist it in `selection-state.json`. Do not let the control silently default back to Gemini Image on refresh.
+- Scene next rounds should use `outputType = "visual_candidate"` and keep the requested frame ratio. If the user says场景要横版, write that into the state and prompt so the next generation uses horizontal composition.
+- If the story depends on a fixed sightline barrier, treat it as a hard scene anchor. Example: the heroine's lake window is on the third floor and still separated by the courtyard wall, so the wall line, window height, and lake/boat distance must remain stable across all scene candidates.
